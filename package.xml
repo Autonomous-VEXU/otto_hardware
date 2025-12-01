@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_hardware</name>
+  <version>0.0.1</version>
+  <description>Provides an interface between omni_wheel_drive_controller and VEX Motors / Brain.</description>
+
+  <maintainer email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</maintainer>
+  <author email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>serial</depend>
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+
+  
+</package>
