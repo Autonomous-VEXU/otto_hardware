@@ -1,6 +1,6 @@
 <library path="robot_hardware">
-  <class name="robot_hardware/VEXOmniInterface"
-         type="VEXOmniInterface"
+  <class name="robot_hardware/OmniWheelhardware"
+         type="robot_hardware::OmniWheelHardware"
          base_class_type="hardware_interface::SystemInterface">
     <description>
       Hardware Interface for Omni wheel drive controller.

@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(robot_hardware)
 
-# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
-
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra)
@@ -18,13 +16,18 @@ find_package(controller_manager REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
 
-add_library(robot_hardware SHARED src/vex_omni_interface.cpp src/vex_comms.cpp)
+add_library(robot_hardware SHARED
+  src/omni_wheel_hardware.cpp
+  src/vex_comms.cpp
+)
 
 target_include_directories(
   robot_hardware
-  PRIVATE
-  include
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
+
 ament_target_dependencies(
   robot_hardware
   hardware_interface
@@ -42,18 +45,25 @@ install(
 )
 
 install(
+  DIRECTORY include/
+  DESTINATION include/
+)
+
+install(
   DIRECTORY controllers launch
   DESTINATION share/${PROJECT_NAME}
 )
 
-ament_export_libraries(
-  robot_hardware
+install(
+  FILES robot_hardware.xml
+  DESTINATION share/${PROJECT_NAME}
 )
 
+ament_export_libraries(robot_hardware)
 ament_export_dependencies(
   hardware_interface
-  controller_manager
   serial
+  controller_manager
   rclcpp
   pluginlib
 )

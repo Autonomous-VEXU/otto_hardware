@@ -6,6 +6,7 @@
 
   <maintainer email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</maintainer>
   <author email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</author>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
