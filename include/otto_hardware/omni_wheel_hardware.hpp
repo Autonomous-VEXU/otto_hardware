@@ -1,7 +1,7 @@
 #ifndef OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 #define OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 
-#include "../include/otto_hardware/vex_comms.hpp"
+#include "otto_hardware/vex_comms.hpp"
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/handle.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>

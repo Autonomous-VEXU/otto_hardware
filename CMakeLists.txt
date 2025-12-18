@@ -17,7 +17,6 @@ add_library(${PROJECT_NAME} SHARED
   src/omni_wheel_hardware.cpp
 )
 
-
 ament_target_dependencies(${PROJECT_NAME}
   hardware_interface
   pluginlib
@@ -35,7 +34,7 @@ install(TARGETS ${PROJECT_NAME}
   DESTINATION lib
 )
 
-install(FILES robot_hardware.xml
+install(FILES otto_hardware.xml
   DESTINATION share/${PROJECT_NAME}
 )
 

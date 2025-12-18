@@ -1,4 +1,4 @@
-// robot_hardware/vex_comms.h
+// otto_hardware/vex_comms.h
 #ifndef OTTO_HARDWARE_VEX_COMMS_H
 #define OTTO_HARDWARE_VEX_COMMS_H
 
