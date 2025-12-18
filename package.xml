@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>robot_hardware</name>
+  <name>otto_hardware</name>
   <version>0.0.1</version>
   <description>Provides an interface between omni_wheel_drive_controller and VEX Motors / Brain.</description>
 
