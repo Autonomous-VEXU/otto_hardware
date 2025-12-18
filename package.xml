@@ -2,7 +2,7 @@
 <package format="2">
   <name>otto_hardware</name>
   <version>0.0.1</version>
-  <description>Provides an interface between omni_wheel_drive_controller and VEX Motors / Brain.</description>
+  <description>Provides an interface between omni_wheel_drive_controller and VEX Motors + Brain.</description>
 
   <maintainer email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</maintainer>
   <author email="kmherbstzuber@wpi.edu">Kylie Herbstzuber</author>
