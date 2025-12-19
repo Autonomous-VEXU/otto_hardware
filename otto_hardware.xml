@@ -1,5 +1,5 @@
 <library path="otto_hardware">
-  <class name="otto_hardware/OmniWheelhardware" type="otto_hardware::OmniWheelHardware" base_class_type="hardware_interface::SystemInterface">
+  <class name="otto_hardware/OmniWheelHardware" type="otto_hardware::OmniWheelHardware" base_class_type="hardware_interface::SystemInterface">
     <description>
       Hardware Interface for a wheel with the omni wheel drive controller.
     </description>
