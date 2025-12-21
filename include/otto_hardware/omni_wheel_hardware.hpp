@@ -18,7 +18,7 @@ class OmniWheelHardware : public hardware_interface::SystemInterface
 public:
     OmniWheelHardware() = default;
 
-    hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
+    hardware_interface::CallbackReturn on_init(hardware_interface::HardwareComponentInterfaceParams & params) override;
 
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;

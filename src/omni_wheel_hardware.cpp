@@ -6,11 +6,14 @@
 
 namespace otto_hardware {
 
-hardware_interface::CallbackReturn OmniWheelHardware::on_init(const hardware_interface::HardwareInfo & info){
+hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
+    /*
     if (info.joints.size() != 4) {
         RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Expected 4 joints, got %zu", info.joints.size());
         return hardware_interface::CallbackReturn::ERROR;
     }
+    */
+    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "started");
 
     // if (!vex_comms.initalize("/dev/ttyTHS0")) {
     //     RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Failed to open VEX serial");
@@ -50,7 +53,7 @@ hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*t
 }
 
 hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
-    if (!vex_comms.is_connected()) return hardware_interface::return_type::ERROR;
+    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "write");
     
     MotorVelocities mv;
     mv.magic = 0xFEFA;
