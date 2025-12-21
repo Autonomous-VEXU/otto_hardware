@@ -2,12 +2,13 @@
 #ifndef OTTO_HARDWARE_VEX_COMMS_H
 #define OTTO_HARDWARE_VEX_COMMS_H
 
-#include <libserial/SerialPort.h>
-#include <libserial/SerialStream.h>
+//#include <libserial/SerialPort.h>
+//#include <libserial/SerialStream.h>
 #include <string>
 #include <vector>
+#include <stdint.h>
 
-using namespace LibSerial;
+//using namespace LibSerial;
 
 struct MotorVelocities {
   uint16_t magic;
@@ -22,7 +23,7 @@ class VEXComms{
   public:
 
     bool initalize(const std::string &serial_device); //maybe add baud rate later
-    bool is_connected() const;
+    bool is_connected();
 
     void writeVelocities();
     void readVelocities();

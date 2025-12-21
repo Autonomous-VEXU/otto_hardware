@@ -1,4 +1,4 @@
-#include "otto_hardware/vex_comms.hpp"
+//#include "otto_hardware/vex_comms.hpp"
 #include "otto_hardware/omni_wheel_hardware.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include <hardware_interface/system_interface.hpp>
@@ -7,6 +7,7 @@
 namespace otto_hardware {
 
 hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
+    
     /*
     if (info.joints.size() != 4) {
         RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Expected 4 joints, got %zu", info.joints.size());
@@ -19,10 +20,12 @@ hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface
     //     RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Failed to open VEX serial");
     //     return hardware_interface::CallbackReturn::ERROR;
     // }
-
+    
+    /*
     std::fill(cmd_.begin(), cmd_.end(), 0.0);
     std::fill(vel_.begin(), vel_.end(), 0.0);
     std::fill(pos_.begin(), pos_.end(), 0.0);
+    */
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -44,24 +47,27 @@ std::vector<hardware_interface::CommandInterface> OmniWheelHardware::export_comm
 }
 
 hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period){
+    /*
     if (!vex_comms.is_connected()) return hardware_interface::return_type::ERROR;
     for (size_t i = 0; i < 4; ++i){
         vel_[i] = cmd_[i];
         pos_[i] += cmd_[i] * period.seconds();
-    }
+    }*/
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
     RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "write");
-    
+
+    //if (!vex_comms.is_connected()) return hardware_interface::return_type::ERROR;
+    /*
     MotorVelocities mv;
     mv.magic = 0xFEFA;
     mv.fl = cmd_[0];
     mv.fr = cmd_[1];
     mv.bl = cmd_[2];
     mv.br = cmd_[3];
-    
+    */
     return hardware_interface::return_type::OK;
 }
 

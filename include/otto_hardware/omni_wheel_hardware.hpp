@@ -1,7 +1,7 @@
 #ifndef OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 #define OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 
-#include "otto_hardware/vex_comms.hpp"
+//#include "otto_hardware/vex_comms.hpp"
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/handle.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
@@ -27,7 +27,7 @@ public:
     hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-    VEXComms vex_comms;
+    //VEXComms vex_comms;
     std::array<double, 4> pos_{};
     std::array<double, 4> vel_{};
     std::array<double, 4> cmd_{};
