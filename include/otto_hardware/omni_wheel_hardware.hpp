@@ -27,7 +27,6 @@ public:
     hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-    //VEXComms vex_comms;
     std::array<double, 4> pos_{};
     std::array<double, 4> vel_{};
     std::array<double, 4> cmd_{};
