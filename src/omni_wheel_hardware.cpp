@@ -49,7 +49,7 @@ namespace otto_hardware {
 
         it = info_.hardware_parameters.find("baud_rate");
         if (it != info_.hardware_parameters.end()) {
-            baud = std::stoi(it->second);  // Convert string to int
+            baud = std::stoi(it->second); 
         } else{
             RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "baud_rate not found, using: %d", baud);
         }
@@ -72,14 +72,16 @@ namespace otto_hardware {
                 return hardware_interface::CallbackReturn::ERROR;
             }
 
-            if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION || joint.state_interfaces[1].name != hardware_interface::HW_IF_POSITION){// verify type of state interface
+            if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION || joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY){// verify type of state interface
                 RCLCPP_FATAL(rclcpp::get_logger("OmniWheelHardware"), "Joint '%s' have %s command interfaces found. '%s' expected.",joint.name.c_str(), joint.state_interfaces[0].name.c_str(),hardware_interface::HW_IF_POSITION);
-                RCLCPP_FATAL(rclcpp::get_logger("OmniWheelHardware"), "Joint '%s' have %s command interfaces found. '%s' expected.",joint.name.c_str(), joint.state_interfaces[0].name.c_str(),hardware_interface::HW_IF_VELOCITY);
+                RCLCPP_FATAL(rclcpp::get_logger("OmniWheelHardware"), "Joint '%s' have %s command interfaces found. '%s' expected.",joint.name.c_str(), joint.state_interfaces[1].name.c_str(),hardware_interface::HW_IF_VELOCITY);
                 return hardware_interface::CallbackReturn::ERROR;
             }
+
         }
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Initialization complete!");
+
         return hardware_interface::CallbackReturn::SUCCESS; // success msg
     }
 
@@ -137,7 +139,7 @@ namespace otto_hardware {
         // mv.bl = cmd_[2];
         // mv.br = cmd_[3];
 
-        // serial.writeBytes(&mv, sizeof(MotorVelocities)); // commented for testing 
+        //serial.writeBytes(&mv, sizeof(MotorVelocities)); // commented for testing 
 
         return hardware_interface::return_type::OK;
     }
@@ -169,10 +171,7 @@ namespace otto_hardware {
             return hardware_interface::CallbackReturn::ERROR; // error msg
         }
         
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);
-        
-        return hardware_interface::CallbackReturn::SUCCESS; // success msg
-        
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);        
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }

@@ -16,9 +16,9 @@ Hardware interface system component.
         - number and type of state interfaces
         - number and type of command interfaces
 - **`on_activate()`**
-    - activates HW by opening a serial connection
+    - activates HW by opening a serial connection with seriallib
 - **`on_deactivate()`**
-    - deactivates HW
+    - deactivates HW by closing the connection with seriallib
 
 ### State Interface Methods:
 - **`export_state_interfaces()`**
@@ -27,7 +27,7 @@ Hardware interface system component.
 
 ### Command Interface Methods:
 - **`export_command_interfaces()`**
-    - velocity of the motors
+    - velocities are being sent from the controller to the hardware 
 
 ### Return Type Methods:
 - **`read()`**
@@ -82,3 +82,4 @@ Example `ros2_control` tag for this hardware interface + the omni wheel drive co
 ## Documentation + References
 - [ros2_control API](http://docs.ros.org/en/jazzy/p/hardware_interface/)
 - [Serialib GitHub Repository](https://github.com/imabot2/serialib/tree/master)
+- [ros2_control_demos/example_2](https://github.com/ros-controls/ros2_control_demos/tree/jazzy/example_2)
