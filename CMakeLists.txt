@@ -15,6 +15,7 @@ include_directories(include)
 
 add_library(${PROJECT_NAME} SHARED
   src/omni_wheel_hardware.cpp
+  src/seriallib.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
