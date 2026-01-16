@@ -2,25 +2,39 @@
 Hardware interface for connecting ros2_control controllers to a VEX V5 brain + motors.
 
 URDF Plugin Name:`otto_hardware/OmniWheelhardware`
-## Dependencies / Included Modules
-- LibSerial
-    - `<libserialSerialPort.h>`
-    - `<libserialSerialStream.h>`
 
-## vex_comms
-Serial communication framework for communicating with the VEX brain.
+## omni_wheel_hardware
+Hardware interface system component.
 
-### Methods:
-- `initalize()`
-    - Initiates the serial connection to the VEX V5 Brain by setting the port and baud rate.
-- `is_connected()`
-    - Returns a boolean. True means the serial port is open, false means it is not open.
-- `writeVelocities()`
-    - Not written yet
-- `readVelocities()`
-    - Not written yet
+### CallBack Return Methods:
+- **`on_init()`**
+    - runs **before** the hardware is actually connected to
+    - loads parameters from URDF `ros2_control` hardware tag
+        - serial_port (default: '/dev/ttyUSB0' )
+        - baud (default: 115200)
+    - checks configuration per joint against expected configuration in order to catch early errors:
+        - number and type of state interfaces
+        - number and type of command interfaces
+- **`on_activate()`**
+    - activates HW by opening a serial connection with seriallib
+- **`on_deactivate()`**
+    - deactivates HW by closing the connection with seriallib
 
-### Structs:
+### State Interface Methods:
+- **`export_state_interfaces()`**
+    - position of the wheels using encoders
+    - velocity of the wheels as reported by the hardware
+
+### Command Interface Methods:
+- **`export_command_interfaces()`**
+    - velocities are being sent from the controller to the hardware 
+
+### Return Type Methods:
+- **`read()`**
+    - Read both position and velocity state interfaces from the connected hardware and update both state interfaces
+- **`write()`**
+    - Write velocity commands to the connected hardware in the form of the `MotorVelocity` struct shown below:
+
 ```cpp
 struct MotorVelocities {
   uint16_t magic; // 0xFEFA
@@ -31,21 +45,41 @@ struct MotorVelocities {
 };
 ```
 
-## omni_wheel_hardware
-Hardware interface system component.
+## URDF/xacro configuration
 
-### CallBack Return Methods:
-- `on_init()`
-    - Initialize hardware
+Example `ros2_control` tag for this hardware interface + the omni wheel drive controller from `ros2_controllers`:
 
-### State Interface Methods:
-- `export_state_interfaces()`
+```xml
+  <ros2_control name="DriveSystem" type="system">
+        <hardware>
+            <plugin>otto_hardware/OmniWheelHardware</plugin>
+            <param name='serial_port'>/dev/ttyUSB0</param>
+            <param name='baud_rate'>115200</param>
+        </hardware>
+        <joint name="wheel_1">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="wheel_2">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="wheel_3">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+        <joint name="wheel_4">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+    </ros2_control>
+```
 
-### Command Interface Methods:
-- `export_command_interfaces()`
-
-### Return Type Methods:
-- `read()`
-    - Read data from connected hardware
-- `write()`
-    - Write data to connected hardware
+## Documentation + References
+- [ros2_control API](http://docs.ros.org/en/jazzy/p/hardware_interface/)
+- [Serialib GitHub Repository](https://github.com/imabot2/serialib/tree/master)
+- [ros2_control_demos/example_2](https://github.com/ros-controls/ros2_control_demos/tree/jazzy/example_2)

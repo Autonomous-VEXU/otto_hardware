@@ -1,7 +1,6 @@
 #ifndef OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 #define OTTO_HARDWARE__OMNI_WHEEL_HARDWARE_HPP
 
-//#include "otto_hardware/vex_comms.hpp"
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/handle.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
@@ -26,8 +25,12 @@ public:
     hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
     hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
+    hardware_interface::CallbackReturn on_configure(const rclcpp_lifecycle::State & /*previous_state*/);
+    hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/);
+    hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/);
+
 private:
-    //VEXComms vex_comms;
+
     std::array<double, 4> pos_{};
     std::array<double, 4> vel_{};
     std::array<double, 4> cmd_{};
@@ -37,6 +40,10 @@ private:
         "chassis_to_wheel_c",
         "chassis_to_wheel_d"
     }};
+
+    // parameters from URDF
+    int baud_rate_;
+    std::string serial_port_;
 };
 
 } // namespace otto_hardware
