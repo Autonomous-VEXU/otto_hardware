@@ -104,14 +104,13 @@ namespace otto_hardware {
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period){
         
         if (!serial.isDeviceOpen()){
-             RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "device not connected");
-            return hardware_interface::return_type::ERROR;
+            return hardware_interface::return_type::OK;
         }
         
         int available = serial.available();
 
         // updates the state interfaces (position and velocity)
-        if (available >= static_cast<int>(sizeof(MotorVelocities))){ // static cast due to return types
+        if (available >= static_cast<int>(sizeof(MotorVelocities))){
             MotorVelocities mv;
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
@@ -122,31 +121,24 @@ namespace otto_hardware {
                 vel_[2] = mv.bl;
                 vel_[3] = mv.br;
                 
-                for (size_t i = 0; i < 4; ++i){ // get more complicated odom stuff later
+                for (size_t i = 0; i < 4; ++i){
                     pos_[i] += vel_[i] * period.seconds();
                 }
-            } else{
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "Invalid data received");
             }
-    
         }
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "READ is being called");
+        
+        
         return hardware_interface::return_type::OK;
     }
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
 
-        if (cmd_.size() < 4) {
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "less than 4");
-            return hardware_interface::return_type::ERROR;
-        }
-
+      
         if (!serial.isDeviceOpen()){
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "device not open");
-            return hardware_interface::return_type::ERROR;
+            return hardware_interface::return_type::OK;
         }
 
-        // write information to command  interfaces (velocity)
+        // write information to command interfaces (velocity)
         MotorVelocities mv;
         mv.magic = 0xFEFA;
         mv.fl = cmd_[0];
@@ -155,8 +147,7 @@ namespace otto_hardware {
         mv.br = cmd_[3];
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "WRITE: front_left: '%f', front_right: '%f', ",mv.fl, mv.fr);
-
+        
         return hardware_interface::return_type::OK;
     }
 
