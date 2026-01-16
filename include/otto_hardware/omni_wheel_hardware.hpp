@@ -30,20 +30,16 @@ public:
     hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/);
 
 private:
-    std::vector<std::string> joint_names_;
-    std::vector<double> pos_;
-    std::vector<double> vel_;
-    std::vector<double> cmd_;
 
-    // std::array<double, 4> pos_{};
-    // std::array<double, 4> vel_{};
-    // std::array<double, 4> cmd_{};
-    // std::array<std::string, 4> joint_names_{{
-    //     "chassis_to_wheel_a",
-    //     "chassis_to_wheel_b",
-    //     "chassis_to_wheel_c",
-    //     "chassis_to_wheel_d"
-    // }};
+    std::array<double, 4> pos_{};
+    std::array<double, 4> vel_{};
+    std::array<double, 4> cmd_{};
+    std::array<std::string, 4> joint_names_{{
+        "chassis_to_wheel_a",
+        "chassis_to_wheel_b",
+        "chassis_to_wheel_c",
+        "chassis_to_wheel_d"
+    }};
 
     // parameters from URDF
     int baud_rate_;

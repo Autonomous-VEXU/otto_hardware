@@ -1,4 +1,3 @@
-//#include "otto_hardware/vex_comms.hpp"
 #include "otto_hardware/omni_wheel_hardware.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include <hardware_interface/system_interface.hpp>
@@ -31,16 +30,15 @@ namespace otto_hardware {
             return hardware_interface::CallbackReturn::ERROR;
         }
 
-        joint_names_.resize(info_.joints.size());
-        pos_.resize(info_.joints.size(), 0.0);
-        vel_.resize(info_.joints.size(), 0.0);
-        cmd_.resize(info_.joints.size(), 0.0);
-
-        for (size_t i = 0; i < info_.joints.size(); ++i) {
-            joint_names_[i] = info_.joints[i].name;
+        // initialize arrays to zero
+        for (size_t i = 0; i < 4; ++i) {
+            pos_[i] = 0.0;
+            vel_[i] = 0.0;
+            cmd_[i] = 0.0;
         }
 
         auto it = info_.hardware_parameters.find("serial_port"); 
+
         if (it != info_.hardware_parameters.end()){
             serial_port = it->second;  // get the value from URDF (it->first is the "key" or param name)
         } else{
@@ -87,7 +85,7 @@ namespace otto_hardware {
 
     std::vector<hardware_interface::StateInterface> OmniWheelHardware::export_state_interfaces(){
         std::vector<hardware_interface::StateInterface> interfaces;
-        for (size_t i = 0; i < joint_names_.size(); ++i){
+        for (size_t i = 0; i < 4; ++i){
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_POSITION, &pos_[i]);
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_VELOCITY, &vel_[i]);
         }
@@ -96,7 +94,7 @@ namespace otto_hardware {
 
     std::vector<hardware_interface::CommandInterface> OmniWheelHardware::export_command_interfaces(){
         std::vector<hardware_interface::CommandInterface> interfaces;
-        for (size_t i = 0; i < joint_names_.size(); ++i){
+        for (size_t i = 0; i < 4; ++i){
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_VELOCITY, &cmd_[i]);
         }
         return interfaces;
@@ -105,7 +103,7 @@ namespace otto_hardware {
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period){
 
         // updates the state interfaces (position and velocity)
-        if (serial.available() >= static_cast<int>(sizeof(MotorVelocities))){ // static cast due to return types
+        if (serial.available() > 0){ // static cast due to return types
             MotorVelocities mv;
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
@@ -128,18 +126,27 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "write");
 
-        // write information to command state interfaces (velocity)
+        if (cmd_.size() < 4) {
+            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "less than 4");
+            return hardware_interface::return_type::OK;
+        }
 
-        // MotorVelocities mv;
-        // mv.magic = 0xFEFA;
-        // mv.fl = cmd_[0];
-        // mv.fr = cmd_[1];
-        // mv.bl = cmd_[2];
-        // mv.br = cmd_[3];
+        if (!serial.isDeviceOpen()){
+            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "device not open");
+            return hardware_interface::return_type::OK;
+        }
 
-        //serial.writeBytes(&mv, sizeof(MotorVelocities)); // commented for testing 
+        // write information to command  interfaces (velocity)
+        MotorVelocities mv;
+        mv.magic = 0xFEFA;
+        mv.fl = cmd_[0];
+        mv.fr = cmd_[1];
+        mv.bl = cmd_[2];
+        mv.br = cmd_[3];
+
+        serial.writeBytes(&mv, sizeof(MotorVelocities)); 
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "works");
 
         return hardware_interface::return_type::OK;
     }
@@ -147,12 +154,10 @@ namespace otto_hardware {
     hardware_interface::CallbackReturn OmniWheelHardware::on_configure(const rclcpp_lifecycle::State & /*previous_state*/){
 
         // reset parameters
-        for (const auto & [name, descr] : joint_state_interfaces_){
-            set_state(name, 0.0);
-        }
-        
-        for (const auto & [name, descr] : joint_command_interfaces_){
-            set_command(name, 0.0);
+        for (size_t i = 0; i < 4; ++i) {
+            pos_[i] = 0.0;
+            vel_[i] = 0.0;
+            cmd_[i] = 0.0;
         }
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successfully configured!");
@@ -168,7 +173,7 @@ namespace otto_hardware {
         // if connection to brain fails
         if (errorOpening!=1) {
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Failed to connect to device");
-            return hardware_interface::CallbackReturn::ERROR; // error msg
+            return hardware_interface::CallbackReturn::ERROR;
         }
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);        
@@ -179,6 +184,7 @@ namespace otto_hardware {
     hardware_interface::CallbackReturn OmniWheelHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/){
         // disable the device by closing the serial connection
         serial.closeDevice();
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Connection to VEX brain closed");
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }
