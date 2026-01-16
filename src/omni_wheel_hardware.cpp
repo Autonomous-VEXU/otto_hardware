@@ -2,6 +2,7 @@
 #include "pluginlib/class_list_macros.hpp"
 #include <hardware_interface/system_interface.hpp>
 #include <rclcpp/rclcpp.hpp>  
+#include <iostream>
 
 #include "seriallib.h"
 
@@ -9,10 +10,10 @@ serialib serial;
 
 namespace otto_hardware {
 
-    static std::string serial_port = "/dev/ttyUSB0";
+    static std::string serial_port = "/dev/ttyACM1";
     static int baud = 115200;
 
-    struct MotorVelocities{ 
+    struct __attribute__((packed)) MotorVelocities{
         uint16_t magic;
         double fl;
         double fr;
@@ -101,9 +102,16 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period){
+        
+        if (!serial.isDeviceOpen()){
+             RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "device not connected");
+            return hardware_interface::return_type::ERROR;
+        }
+        
+        int available = serial.available();
 
         // updates the state interfaces (position and velocity)
-        if (serial.available() > 0){ // static cast due to return types
+        if (available >= static_cast<int>(sizeof(MotorVelocities))){ // static cast due to return types
             MotorVelocities mv;
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
@@ -117,11 +125,12 @@ namespace otto_hardware {
                 for (size_t i = 0; i < 4; ++i){ // get more complicated odom stuff later
                     pos_[i] += vel_[i] * period.seconds();
                 }
-
             } else{
                 RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "Invalid data received");
             }
+    
         }
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "READ is being called");
         return hardware_interface::return_type::OK;
     }
 
@@ -129,12 +138,12 @@ namespace otto_hardware {
 
         if (cmd_.size() < 4) {
             RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "less than 4");
-            return hardware_interface::return_type::OK;
+            return hardware_interface::return_type::ERROR;
         }
 
         if (!serial.isDeviceOpen()){
             RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "device not open");
-            return hardware_interface::return_type::OK;
+            return hardware_interface::return_type::ERROR;
         }
 
         // write information to command  interfaces (velocity)
@@ -146,7 +155,7 @@ namespace otto_hardware {
         mv.br = cmd_[3];
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "works");
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "WRITE: front_left: '%f', front_right: '%f', ",mv.fl, mv.fr);
 
         return hardware_interface::return_type::OK;
     }
@@ -166,6 +175,9 @@ namespace otto_hardware {
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/){
         const char* SERIAL_PORT = serial_port.c_str(); // convert to char
+
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Opening serial port: %s at %d baud", SERIAL_PORT, baud);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorVelocities struct size: %zu bytes", sizeof(MotorVelocities));
 
         // connection to serial port
         char errorOpening = serial.openDevice(SERIAL_PORT, baud);
