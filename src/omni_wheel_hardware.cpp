@@ -127,7 +127,7 @@ namespace otto_hardware {
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
             
-            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xFEFA){
+            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF81C){
                 vel_[0] = mv.fl;
                 vel_[1] = mv.fr;
                 vel_[2] = mv.bl;
@@ -137,16 +137,17 @@ namespace otto_hardware {
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
                 
-                for (size_t i = 0; i < 4; ++i){
-                    pos_[i] += vel_[i] * period.seconds();
-                }
+            }else if(bytes_read = static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
+                pos_[0] = mv.fl;
+                pos_[1] = mv.fl;
+                pos_[2] = mv.fl;
+                pos_[3] = mv.fl;
 
-                for (size_t i = 0; i <3; i++){
-                    intake_pos_[i] += intake_vel_[i] * period.seconds();
-                }
+                intake_pos_[0] = mv.intake_1;
+                intake_pos_[1] = mv.intake_2;
+                intake_pos_[2] = mv.intake_3;
             }
         }
-        
         
         return hardware_interface::return_type::OK;
     }
