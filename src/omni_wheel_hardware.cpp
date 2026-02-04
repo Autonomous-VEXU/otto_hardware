@@ -137,7 +137,7 @@ namespace otto_hardware {
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
                 
-            }else if(bytes_read = static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
+            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
                 pos_[0] = mv.fl;
                 pos_[1] = mv.fl;
                 pos_[2] = mv.fl;
@@ -184,6 +184,7 @@ namespace otto_hardware {
             vel_[i] = 0.0;
             cmd_[i] = 0.0;
         }
+        
         //reset intake params
         for (size_t i = 0; i < 3; ++i) {
             intake_pos_[i] = 0.0;
