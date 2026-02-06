@@ -177,15 +177,13 @@ namespace otto_hardware {
         mv.bl = cmd_[2];
         mv.br = cmd_[3];
 
-        mv.intake_1 = 0.0;
-        mv.intake_2 = 0.0;
-        mv.intake_3 = 0.0;
+        mv.intake_1 = intake_cmd_[0];
+        mv.intake_2 = intake_cmd_[1];
+        mv.intake_3 = intake_cmd_[2];
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
-        // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), 
-        //     "Sending motor packet: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f", 
-        //     mv.magic, mv.fl, mv.fr, mv.bl, mv.br);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Intake debug: int_1=%.2f, int2=%.2f, int3=%.2f", mv.intake_1, mv.intake_2, mv.intake_3);
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
         
