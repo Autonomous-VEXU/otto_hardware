@@ -10,7 +10,7 @@ serialib serial;
 
 namespace otto_hardware {
 
-    static std::string serial_port = "/dev/ttyTHS1";
+    static std::string serial_port = "/dev/ttyACM1";
     static int baud = 115200;
     
     static uint16_t SEND_CMD = 0xFEFA;
