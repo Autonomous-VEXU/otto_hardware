@@ -41,14 +41,14 @@ private:
         "chassis_to_wheel_d"
     }};
 
-    std::array<double, 3> intake_pos_{};
-    std::array<double, 3> intake_vel_{};
-    std::array<double, 3> intake_cmd_{};
-    std::array<std::string, 3> intake_joint_names_{{
-        "intake_1",
-        "intake_2",
-        "intake_3"
-    }};
+    // std::array<double, 3> intake_pos_{};
+    // std::array<double, 3> intake_vel_{};
+    // std::array<double, 3> intake_cmd_{};
+    // std::array<std::string, 3> intake_joint_names_{{
+    //     "intake_1",
+    //     "intake_2",
+    //     "intake_3"
+    // }};
 
     // parameters from URDF
     int baud_rate_;
