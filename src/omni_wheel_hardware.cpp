@@ -3,6 +3,7 @@
 #include <hardware_interface/system_interface.hpp>
 #include <rclcpp/rclcpp.hpp>  
 #include <iostream>
+#include <chrono>
 
 #include "seriallib.h"
 
@@ -167,6 +168,15 @@ namespace otto_hardware {
             return hardware_interface::return_type::OK;
         }
 
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_write_time_).count();
+    
+        if (elapsed < WRITE_INTERVAL_MS) {
+            return hardware_interface::return_type::OK;  // Skip this write
+        }
+        
+        last_write_time_ = now;
+
         uint16_t magic = 0xFEFA;
         serial.writeBytes(&magic, sizeof(magic));
 
@@ -212,19 +222,20 @@ namespace otto_hardware {
     }
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/){
-        const char* SERIAL_PORT = serial_port.c_str(); // convert to char
+        const char* SERIAL_PORT = serial_port.c_str();
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Opening serial port: %s at %d baud", SERIAL_PORT, baud);
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorVelocities struct size: %zu bytes", sizeof(MotorVelocities));
 
-        // connection to serial port
         char errorOpening = serial.openDevice(SERIAL_PORT, baud);
 
-        // if connection to brain fails
         if (errorOpening!=1) {
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Failed to connect to device");
             return hardware_interface::CallbackReturn::ERROR;
         }
+        
+        // init the timer
+        last_write_time_ = std::chrono::steady_clock::now();
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);        
 

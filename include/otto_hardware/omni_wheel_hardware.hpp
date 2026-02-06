@@ -50,6 +50,10 @@ private:
         "intake_3"
     }};
 
+
+    std::chrono::steady_clock::time_point last_write_time_;
+    static constexpr int WRITE_INTERVAL_MS = 20;  // Adjust interval as needed
+
     // parameters from URDF
     int baud_rate_;
     std::string serial_port_;
