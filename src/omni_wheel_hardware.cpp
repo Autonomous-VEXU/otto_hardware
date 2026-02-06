@@ -12,9 +12,10 @@ namespace otto_hardware {
 
     static std::string serial_port = "/dev/ttyTHS1";
     static int baud = 115200;
+    static uint16_t SEND_MAGIC = 0xFEFA;
 
     struct __attribute__((packed)) MotorVelocities{
-        uint16_t magic;
+        //uint16_t magic;
         double fl;
         double fr;
         double bl;
@@ -127,7 +128,7 @@ namespace otto_hardware {
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
             
-            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF81C){
+            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) /*&& mv.magic == 0xF81C*/){
                 vel_[0] = mv.fl;
                 vel_[1] = mv.fr;
                 vel_[2] = mv.bl;
@@ -137,16 +138,17 @@ namespace otto_hardware {
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
                 
-            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
-                pos_[0] = mv.fl;
-                pos_[1] = mv.fl;
-                pos_[2] = mv.fl;
-                pos_[3] = mv.fl;
-
-                intake_pos_[0] = mv.intake_1;
-                intake_pos_[1] = mv.intake_2;
-                intake_pos_[2] = mv.intake_3;
             }
+            //else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) /*&& mv.magic == 0xF23B*/ ){
+            //     pos_[0] = mv.fl;
+            //     pos_[1] = mv.fl;
+            //     pos_[2] = mv.fl;
+            //     pos_[3] = mv.fl;
+
+            //     intake_pos_[0] = mv.intake_1;
+            //     intake_pos_[1] = mv.intake_2;
+            //     intake_pos_[2] = mv.intake_3;
+            // }
         }
         
         return hardware_interface::return_type::OK;
@@ -159,9 +161,12 @@ namespace otto_hardware {
             return hardware_interface::return_type::OK;
         }
 
+        uint16_t magic = 0xFEFA;
+        serial.writeBytes(&magic, sizeof(magic));
+
         // write information to command interfaces (velocity)
         MotorVelocities mv;
-        mv.magic = 0xFEFA;
+        //mv.magic = 0xFEFA;
         mv.fl = cmd_[0];
         mv.fr = cmd_[1];
         mv.bl = cmd_[2];
@@ -172,8 +177,8 @@ namespace otto_hardware {
         mv.intake_3 = 0.0;
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), 
-            "Sending motor packet: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f", 
-            mv.magic, mv.fl, mv.fr, mv.bl, mv.br);
+            "Sending motor packet: fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f", 
+            mv.fl, mv.fr, mv.bl, mv.br);
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
         
