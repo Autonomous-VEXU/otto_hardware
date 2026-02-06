@@ -43,6 +43,13 @@ namespace otto_hardware {
             cmd_[i] = 0.0;
         }
 
+        // initialize arrays to zero
+        for (size_t i = 0; i < 3; ++i) {
+            intake_pos_[i] = 0.0;
+            intake_vel_[i] = 0.0;
+            intake_cmd_[i] = 0.0;
+        }
+
         auto it = info_.hardware_parameters.find("serial_port"); 
 
         if (it != info_.hardware_parameters.end()){
@@ -156,7 +163,6 @@ namespace otto_hardware {
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
 
-      
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
         }
