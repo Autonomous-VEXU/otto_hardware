@@ -167,26 +167,11 @@ namespace otto_hardware {
         mv.bl = cmd_[2];
         mv.br = cmd_[3];
 
-        mv.intake_1 = intake_cmd_[0];
-        mv.intake_2 = intake_cmd_[1];
-        mv.intake_3 = intake_cmd_[2];
+        mv.intake_1 = 0.0;
+        mv.intake_2 = 0.0;
+        mv.intake_3 = 0.0;
 
-        static auto clock = rclcpp::Clock();
-
-        RCLCPP_INFO_THROTTLE(rclcpp::get_logger("OmniWheelHardware"), 
-                        clock, 1000, 
-                        "Sending: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f, size=%zu bytes",
-                        mv.magic, mv.fl, mv.fr, mv.bl, mv.br, sizeof(MotorVelocities));
-        
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
-
-        // if (bytes_written != static_cast<int>(sizeof(MotorVelocities))) {
-        // static auto clock = rclcpp::Clock();
-        // RCLCPP_WARN_THROTTLE(rclcpp::get_logger("OmniWheelHardware"), 
-        //                    clock, 1000,
-        //                    "Incomplete write: sent %d bytes, expected %zu", 
-        //                    bytes_written, sizeof(MotorVelocities));
-        
         
         return hardware_interface::return_type::OK;
     }
@@ -225,8 +210,6 @@ namespace otto_hardware {
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Failed to connect to device");
             return hardware_interface::CallbackReturn::ERROR;
         }
-
-        serial.flushReceiver();
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);        
 
