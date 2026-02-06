@@ -187,10 +187,6 @@ namespace otto_hardware {
         //                    "Incomplete write: sent %d bytes, expected %zu", 
         //                    bytes_written, sizeof(MotorVelocities));
         
-        // flush bytes
-        serial.flushReceiver();
-        return hardware_interface::return_type::ERROR;
-    }
         
         return hardware_interface::return_type::OK;
     }
