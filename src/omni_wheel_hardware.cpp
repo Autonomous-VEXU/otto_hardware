@@ -10,9 +10,11 @@ serialib serial;
 
 namespace otto_hardware {
 
-    static std::string serial_port = "/dev/ttyTHS1";
+    static std::string serial_port = "/dev/ttyS0";
     static int baud = 115200;
     static uint16_t SEND_MAGIC = 0xFEFA;
+    static uint16_t READ_VELOCITY =  0xF81C;
+    static uint16_t READ_POSITION = 0xF23B;
 
     struct __attribute__((packed)) MotorVelocities{
         //uint16_t magic;
@@ -21,9 +23,9 @@ namespace otto_hardware {
         double bl;
         double br;
 
-        double intake_1;
-        double intake_2;
-        double intake_3;
+        // double intake_1;
+        // double intake_2;
+        // double intake_3;
     };
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
@@ -141,9 +143,9 @@ namespace otto_hardware {
                 vel_[2] = mv.bl;
                 vel_[3] = mv.br;
 
-                intake_vel_[0] = mv.intake_1;
-                intake_vel_[1] = mv.intake_2;
-                intake_vel_[2] = mv.intake_3;
+                // intake_vel_[0] = mv.intake_1;
+                // intake_vel_[1] = mv.intake_2;
+                // intake_vel_[2] = mv.intake_3;
                 
             }
             //else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) /*&& mv.magic == 0xF23B*/ ){
@@ -178,9 +180,9 @@ namespace otto_hardware {
         mv.bl = cmd_[2];
         mv.br = cmd_[3];
 
-        mv.intake_1 = 0.0;
-        mv.intake_2 = 0.0;
-        mv.intake_3 = 0.0;
+        // mv.intake_1 = 0.0;
+        // mv.intake_2 = 0.0;
+        // mv.intake_3 = 0.0;
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
@@ -200,7 +202,7 @@ namespace otto_hardware {
             cmd_[i] = 0.0;
         }
         
-        //reset intake params
+        // reset intake params
         for (size_t i = 0; i < 3; ++i) {
             intake_pos_[i] = 0.0;
             intake_vel_[i] = 0.0;
