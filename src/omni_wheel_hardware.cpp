@@ -17,7 +17,7 @@ namespace otto_hardware {
     static uint16_t READ_POSITION = 0xF23B;
 
     struct __attribute__((packed)) MotorVelocities{
-        //uint16_t magic;
+        uint16_t magic;
         double fl;
         double fr;
         double bl;
@@ -169,12 +169,12 @@ namespace otto_hardware {
             return hardware_interface::return_type::OK;
         }
 
-        uint16_t magic = 0xFEFA;
-        serial.writeBytes(&magic, sizeof(magic));
+        // uint16_t magic = 0xFEFA;
+        // serial.writeBytes(&magic, sizeof(magic));
 
         // write information to command interfaces (velocity)
         MotorVelocities mv;
-        //mv.magic = 0xFEFA;
+        mv.magic = 0xFEFA;
         mv.fl = cmd_[0];
         mv.fr = cmd_[1];
         mv.bl = cmd_[2];
