@@ -170,15 +170,22 @@ namespace otto_hardware {
         mv.intake_1 = 0.0;
         mv.intake_2 = 0.0;
         mv.intake_3 = 0.0;
-        
-        int bytes_written = serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
-        if (bytes_written != static_cast<int>(sizeof(MotorVelocities))) {
         static auto clock = rclcpp::Clock();
-        RCLCPP_WARN_THROTTLE(rclcpp::get_logger("OmniWheelHardware"), 
-                           clock, 1000,
-                           "Incomplete write: sent %d bytes, expected %zu", 
-                           bytes_written, sizeof(MotorVelocities));
+
+        RCLCPP_INFO_THROTTLE(rclcpp::get_logger("OmniWheelHardware"), 
+                        clock, 1000, 
+                        "Sending: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f, size=%zu bytes",
+                        mv.magic, mv.fl, mv.fr, mv.bl, mv.br, sizeof(MotorVelocities));
+        
+        serial.writeBytes(&mv, sizeof(MotorVelocities)); 
+
+        // if (bytes_written != static_cast<int>(sizeof(MotorVelocities))) {
+        // static auto clock = rclcpp::Clock();
+        // RCLCPP_WARN_THROTTLE(rclcpp::get_logger("OmniWheelHardware"), 
+        //                    clock, 1000,
+        //                    "Incomplete write: sent %d bytes, expected %zu", 
+        //                    bytes_written, sizeof(MotorVelocities));
         
         // flush bytes
         serial.flushReceiver();
