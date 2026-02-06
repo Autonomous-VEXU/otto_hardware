@@ -183,9 +183,9 @@ namespace otto_hardware {
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), 
-            "Sending motor packet: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f", 
-            mv.magic, mv.fl, mv.fr, mv.bl, mv.br);
+        // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), 
+        //     "Sending motor packet: magic=0x%04X, fl=%.3f, fr=%.3f, bl=%.3f, br=%.3f", 
+        //     mv.magic, mv.fl, mv.fr, mv.bl, mv.br);
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
         
