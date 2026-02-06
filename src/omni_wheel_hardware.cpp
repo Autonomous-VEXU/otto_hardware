@@ -183,7 +183,7 @@ namespace otto_hardware {
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Intake debug: int_1=%.2f, int2=%.2f, int3=%.2f", mv.intake_1, mv.intake_2, mv.intake_3);
+        // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Intake debug: int_1=%.2f, int2=%.2f, int3=%.2f", mv.intake_1, mv.intake_2, mv.intake_3);
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
         
