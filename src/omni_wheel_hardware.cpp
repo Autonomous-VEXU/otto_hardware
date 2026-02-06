@@ -12,21 +12,21 @@ namespace otto_hardware {
 
     static std::string serial_port = "/dev/ttyTHS1";
     static int baud = 115200;
-    
-    static uint16_t SEND_CMD = 0xFEFA;
-    static uint16_t GET_POS = 0xF23B;
-    static uint16_t GET_VEL = 0xF81C;
+
+    constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
+    constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
+    constexpr uint64_t GET_VEL  = 0xF81CB00B1350C0CA;
 
     struct __attribute__((packed)) MotorVelocities{
-        uint16_t magic;
-        double fl;
-        double fr;
-        double bl;
-        double br;
+        uint64_t magic;
+        float fl;
+        float fr;
+        float bl;
+        float br;
 
-        // double intake_1;
-        // double intake_2;
-        // double intake_3;
+        float intake_1;
+        float intake_2;
+        float intake_3;
     };
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
@@ -46,12 +46,12 @@ namespace otto_hardware {
             cmd_[i] = 0.0;
         }
 
-        // // initialize arrays to zero
-        // for (size_t i = 0; i < 3; ++i) {
-        //     intake_pos_[i] = 0.0;
-        //     intake_vel_[i] = 0.0;
-        //     intake_cmd_[i] = 0.0;
-        // }
+        // initialize arrays to zero
+        for (size_t i = 0; i < 3; ++i) {
+            intake_pos_[i] = 0.0;
+            intake_vel_[i] = 0.0;
+            intake_cmd_[i] = 0.0;
+        }
 
         auto it = info_.hardware_parameters.find("serial_port"); 
 
@@ -105,10 +105,10 @@ namespace otto_hardware {
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_POSITION, &pos_[i]);
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_VELOCITY, &vel_[i]);
         }
-        // for (size_t i = 0; i < 3; i++){
-        //     interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_POSITION, &intake_pos_[i]);
-        //     interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_VELOCITY, &intake_vel_[i]);
-        // }
+        for (size_t i = 0; i < 3; i++){
+            interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_POSITION, &intake_pos_[i]);
+            interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_VELOCITY, &intake_vel_[i]);
+        }
         return interfaces;
     }
 
@@ -118,9 +118,9 @@ namespace otto_hardware {
             interfaces.emplace_back(joint_names_[i], hardware_interface::HW_IF_VELOCITY, &cmd_[i]);
         }
 
-        // for(size_t i = 0; i<3; i++){
-        //     interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_VELOCITY, &intake_cmd_[i]);
-        // }
+        for(size_t i = 0; i<3; i++){
+            interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_VELOCITY, &intake_cmd_[i]);
+        }
         return interfaces;
     }
 
@@ -138,25 +138,25 @@ namespace otto_hardware {
             
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
             
-            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF81C){
+            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_VEL){
                 vel_[0] = mv.fl;
                 vel_[1] = mv.fr;
                 vel_[2] = mv.bl;
                 vel_[3] = mv.br;
 
-                // intake_vel_[0] = mv.intake_1;
-                // intake_vel_[1] = mv.intake_2;
-                // intake_vel_[2] = mv.intake_3;
+                intake_vel_[0] = mv.intake_1;
+                intake_vel_[1] = mv.intake_2;
+                intake_vel_[2] = mv.intake_3;
                 
-            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
+            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
                 pos_[0] = mv.fl;
                 pos_[1] = mv.fl;
                 pos_[2] = mv.fl;
                 pos_[3] = mv.fl;
 
-                // intake_pos_[0] = mv.intake_1;
-                // intake_pos_[1] = mv.intake_2;
-                // intake_pos_[2] = mv.intake_3;
+                intake_pos_[0] = mv.intake_1;
+                intake_pos_[1] = mv.intake_2;
+                intake_pos_[2] = mv.intake_3;
             }
         }
         
@@ -171,15 +171,15 @@ namespace otto_hardware {
 
         // write information to command interfaces (velocity)
         MotorVelocities mv;
-        mv.magic = 0xFEFA;
+        mv.magic = SEND_CMD;
         mv.fl = cmd_[0];
         mv.fr = cmd_[1];
         mv.bl = cmd_[2];
         mv.br = cmd_[3];
 
-        // mv.intake_1 = 0.0;
-        // mv.intake_2 = 0.0;
-        // mv.intake_3 = 0.0;
+        mv.intake_1 = 0.0;
+        mv.intake_2 = 0.0;
+        mv.intake_3 = 0.0;
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
 
@@ -201,12 +201,12 @@ namespace otto_hardware {
             cmd_[i] = 0.0;
         }
         
-        // // reset intake params
-        // for (size_t i = 0; i < 3; ++i) {
-        //     intake_pos_[i] = 0.0;
-        //     intake_vel_[i] = 0.0;
-        //     intake_cmd_[i] = 0.0;
-        // }
+        // reset intake params
+        for (size_t i = 0; i < 3; ++i) {
+            intake_pos_[i] = 0.0;
+            intake_vel_[i] = 0.0;
+            intake_cmd_[i] = 0.0;
+        }
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successfully configured!");
         return hardware_interface::CallbackReturn::SUCCESS;
