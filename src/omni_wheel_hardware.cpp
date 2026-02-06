@@ -124,7 +124,7 @@ namespace otto_hardware {
         return interfaces;
     }
 
-    hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & period){
+    hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
         
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
