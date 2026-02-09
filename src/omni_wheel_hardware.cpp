@@ -91,7 +91,6 @@ namespace otto_hardware {
                 RCLCPP_FATAL(rclcpp::get_logger("OmniWheelHardware"), "Joint '%s' have %s command interfaces found. '%s' expected.",joint.name.c_str(), joint.state_interfaces[1].name.c_str(),hardware_interface::HW_IF_VELOCITY);
                 return hardware_interface::CallbackReturn::ERROR;
             }
-
         }
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Initialization complete!");
@@ -147,12 +146,12 @@ namespace otto_hardware {
                 intake_vel_[0] = mv.intake_1;
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
-                
+
             }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
                 pos_[0] = mv.fl;
-                pos_[1] = mv.fl;
-                pos_[2] = mv.fl;
-                pos_[3] = mv.fl;
+                pos_[1] = mv.fr;
+                pos_[2] = mv.bl;
+                pos_[3] = mv.br;
 
                 intake_pos_[0] = mv.intake_1;
                 intake_pos_[1] = mv.intake_2;
