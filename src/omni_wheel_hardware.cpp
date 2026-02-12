@@ -19,15 +19,17 @@ namespace otto_hardware {
 
     struct __attribute__((packed)) MotorVelocities{
         uint64_t magic;
-        float fl;
-        float fr;
-        float bl;
-        float br;
+        double fl;
+        double fr;
+        double bl;
+        double br;
 
-        float intake_1;
-        float intake_2;
-        float intake_3;
+        double intake_1;
+        double intake_2;
+        double intake_3;
     };
+
+    static_assert(sizeof(MotorVelocities) == 64, "MotorVelocities size mismatch: expected 64 bytes for uint64 + 7*f64");
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
         /*  Things that need to occur:
