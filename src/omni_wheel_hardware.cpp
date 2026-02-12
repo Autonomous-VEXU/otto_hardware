@@ -142,6 +142,7 @@ namespace otto_hardware {
             std::vector<uint8_t> temp_buf(available);
             int bytes_read = serial.readBytes(temp_buf.data(), available);
             if (bytes_read > 0) { 
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Append data to global buffer...");
                 rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
             }
         }
@@ -164,9 +165,30 @@ namespace otto_hardware {
                     
                     RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Got correct packet, magic: 0x%lX", magic);
 
-                    // logic for if packet is position
+                   if (mv.magic == GET_VEL) {
+                        vel_[0] = mv.fl;
+                        vel_[1] = mv.fr;
+                        vel_[2] = mv.bl;
+                        vel_[3] = mv.br;
 
-                    // logic for if packet is velocity
+                        intake_vel_[0] = mv.intake_1;
+                        intake_vel_[1] = mv.intake_2;
+                        intake_vel_[2] = mv.intake_3;
+
+                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
+
+                    } else if (mv.magic == GET_POS) {
+                        pos_[0] = mv.fl;
+                        pos_[1] = mv.fr;
+                        pos_[2] = mv.bl;
+                        pos_[3] = mv.br;
+
+                        intake_pos_[0] = mv.intake_1;
+                        intake_pos_[1] = mv.intake_2;
+                        intake_pos_[2] = mv.intake_3;
+
+                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
+                    }
 
                     break; // found packet, so exit while "search" loop
                 }
