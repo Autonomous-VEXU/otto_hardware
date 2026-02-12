@@ -136,7 +136,7 @@ namespace otto_hardware {
         if (available >= static_cast<int>(sizeof(MotorVelocities))){
             MotorVelocities mv;
             
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Is Available %d", mv);
+            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Is Available %d", available);
 
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
             
