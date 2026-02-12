@@ -3,8 +3,6 @@
 #include <hardware_interface/system_interface.hpp>
 #include <rclcpp/rclcpp.hpp>  
 #include <iostream>
-#include <vector>
-#include <cstring>
 
 #include "seriallib.h"
 
@@ -131,57 +129,41 @@ namespace otto_hardware {
             return hardware_interface::return_type::OK;
         }
         
-        int available = serial.available(); // how many bytes are available
-        if (available <= 0) {
-            return hardware_interface::return_type::OK;
-        }
+        int available = serial.available();
 
-        std::vector<uint8_t> buf(static_cast<size_t>(available)); //read up until available bytes in temp buffer
-        int bytes = serial.readBytes(buf.data(), available);
-        if (bytes <= 0) return hardware_interface::return_type::OK; // read fails
+        // updates the state interfaces (position and velocity)
+        if (available >= static_cast<int>(sizeof(MotorVelocities))){
+            MotorVelocities mv;
+            
+            int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
+            
+            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_VEL){
+                vel_[0] = mv.fl;
+                vel_[1] = mv.fr;
+                vel_[2] = mv.bl;
+                vel_[3] = mv.br;
 
-        static std::vector<uint8_t> rx; //persistent buffer
-        rx.insert(rx.end(), buf.begin(), buf.begin() + bytes);
+                intake_vel_[0] = mv.intake_1;
+                intake_vel_[1] = mv.intake_2;
+                intake_vel_[2] = mv.intake_3;
 
-        const size_t pkt = sizeof(MotorVelocities); //packet size equals MotorVelocities struct size
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
 
-        while (rx.size() >= pkt) {
-            uint64_t magic = 0; // find out what type of packet it is (peek first 8 bytes)
-            std::memcpy(&magic, rx.data(), sizeof(uint64_t));
-            if (magic == GET_POS || GET_VEL){
-                MotorVelocities mv; // have a valid packet
-                std::memcpy(&mv, rx.data(), pkt);
 
-                //remove bytes from the RX buffer
-                rx.erase(rx.begin(), rx.begin() + pkt);
+            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
+                pos_[0] = mv.fl;
+                pos_[1] = mv.fr;
+                pos_[2] = mv.bl;
+                pos_[3] = mv.br;
 
-                if(mv.magic == GET_VEL){
-                    vel_[0] = mv.fl;
-                    vel_[1] = mv.fr;
-                    vel_[2] = mv.bl;
-                    vel_[3] = mv.br;
+                intake_pos_[0] = mv.intake_1;
+                intake_pos_[1] = mv.intake_2;
+                intake_pos_[2] = mv.intake_3;
 
-                    intake_vel_[0] = mv.intake_1;
-                    intake_vel_[1] = mv.intake_2;
-                    intake_vel_[2] = mv.intake_3;
-
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
-                }else{
-                    pos_[0] = mv.fl;
-                    pos_[1] = mv.fr;
-                    pos_[2] = mv.bl;
-                    pos_[3] = mv.br;
-
-                    intake_pos_[0] = mv.intake_1;
-                    intake_pos_[1] = mv.intake_2;
-                    intake_pos_[2] = mv.intake_3;
-
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
-                }
-            }else{
-                rx.erase(rx.begin());
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
             }
         }
+        
         return hardware_interface::return_type::OK;
     }
 
