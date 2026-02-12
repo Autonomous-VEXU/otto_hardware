@@ -3,6 +3,8 @@
 #include <hardware_interface/system_interface.hpp>
 #include <rclcpp/rclcpp.hpp>  
 #include <iostream>
+#include <vector>
+#include <cstring>
 
 #include "seriallib.h"
 
@@ -12,6 +14,8 @@ namespace otto_hardware {
 
     static std::string serial_port = "/dev/ttyTHS1";
     static int baud = 115200;
+
+    static std::vector<uint8_t> rx_buf; // global buffer
 
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
@@ -126,47 +130,50 @@ namespace otto_hardware {
 
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
         
-        if (!serial.isDeviceOpen()){
-            return hardware_interface::return_type::OK;
+        if (!serial.isDeviceOpen()){ // error handle for 
+            RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Device not open, cannot read data");
+            return hardware_interface::return_type::ERROR;
         }
         
         int available = serial.available();
+        const size_t packet_size = sizeof(MotorVelocities); // should be like 36 bytes i think
 
-        // updates the state interfaces (position and velocity)
-        if (available >= static_cast<int>(sizeof(MotorVelocities))){
-            MotorVelocities mv;
-            
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Is Available %d", available);
-
-            int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
-            
-            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_VEL){
-                vel_[0] = mv.fl;
-                vel_[1] = mv.fr;
-                vel_[2] = mv.bl;
-                vel_[3] = mv.br;
-
-                intake_vel_[0] = mv.intake_1;
-                intake_vel_[1] = mv.intake_2;
-                intake_vel_[2] = mv.intake_3;
-
-                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
-
-
-            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
-                pos_[0] = mv.fl;
-                pos_[1] = mv.fr;
-                pos_[2] = mv.bl;
-                pos_[3] = mv.br;
-
-                intake_pos_[0] = mv.intake_1;
-                intake_pos_[1] = mv.intake_2;
-                intake_pos_[2] = mv.intake_3;
-
-                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
+        if (available > 0) { 
+            std::vector<uint8_t> temp_buf(available);
+            int bytes_read = serial.readBytes(temp_buf.data(), available);
+            if (bytes_read > 0) { 
+                rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
             }
         }
-        
+
+        if (rx_buf.size() >= packet_size){
+            
+            // start form end packet position
+            int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
+
+            while(idx>=0){
+
+                uint64_t magic;
+                std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint16_t)); 
+
+                if(magic == GET_VEL || magic == GET_POS){ // if magic matches one of the two cases
+                    MotorVelocities mv;
+                    std::memcpy(&mv, rx_buf.data(), packet_size);
+                    
+                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + packet_size); // remove packet from buffer
+                    
+                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Got correct packet, magic: 0x%lX", magic);
+
+                    // logic for if packet is position
+
+                    // logic for if packet is velocity
+
+                    break; // found packet, so exit while "search" loop
+                }
+            }
+            idx--; // move backwards by a byte
+        }
+
         return hardware_interface::return_type::OK;
     }
 
