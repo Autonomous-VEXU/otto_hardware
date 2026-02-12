@@ -147,6 +147,9 @@ namespace otto_hardware {
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
 
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
+
+
             }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
                 pos_[0] = mv.fl;
                 pos_[1] = mv.fr;
@@ -156,6 +159,8 @@ namespace otto_hardware {
                 intake_pos_[0] = mv.intake_1;
                 intake_pos_[1] = mv.intake_2;
                 intake_pos_[2] = mv.intake_3;
+
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
             }
         }
         
@@ -179,10 +184,6 @@ namespace otto_hardware {
         mv.intake_1 = intake_cmd_[0];
         mv.intake_2 = intake_cmd_[1];
         mv.intake_3 = intake_cmd_[2];
-
-        serial.writeBytes(&mv, sizeof(MotorVelocities)); 
-
-        // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Intake debug: int_1=%.2f, int2=%.2f, int3=%.2f", mv.intake_1, mv.intake_2, mv.intake_3);
 
         serial.writeBytes(&mv, sizeof(MotorVelocities)); 
         
