@@ -19,14 +19,14 @@ namespace otto_hardware {
 
     struct __attribute__((packed)) MotorVelocities{
         uint64_t magic;
-        double fl;
-        double fr;
-        double bl;
-        double br;
+        float fl;
+        float fr;
+        float bl;
+        float br;
 
-        double intake_1;
-        double intake_2;
-        double intake_3;
+        float intake_1;
+        float intake_2;
+        float intake_3;
     };
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
@@ -128,7 +128,9 @@ namespace otto_hardware {
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
         }
-        
+
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Read function called");
+
         int available = serial.available();
 
         // updates the state interfaces (position and velocity)
@@ -148,7 +150,6 @@ namespace otto_hardware {
                 intake_vel_[2] = mv.intake_3;
 
                 RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
-
 
             }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
                 pos_[0] = mv.fl;
