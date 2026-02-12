@@ -145,6 +145,12 @@ namespace otto_hardware {
                 RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Append data to global buffer...");
                 rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
             }
+
+            const size_t MAX_BUFFER_SIZE = packet_size * 3; 
+            if (rx_buf.size() > MAX_BUFFER_SIZE) {
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow");
+                rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
+            }
         }
 
         if (rx_buf.size() >= packet_size){
