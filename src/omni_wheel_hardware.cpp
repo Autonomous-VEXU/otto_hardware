@@ -138,7 +138,7 @@ namespace otto_hardware {
         int available = serial.available();
         const size_t packet_size = sizeof(MotorVelocities); // should be like 36 bytes i think
 
-        if (available > 0) { 
+        if (available > 0){ 
             std::vector<uint8_t> temp_buf(available);
             int bytes_read = serial.readBytes(temp_buf.data(), available);
             if (bytes_read > 0) { 
@@ -155,13 +155,13 @@ namespace otto_hardware {
             while(idx>=0){
 
                 uint64_t magic;
-                std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint16_t)); 
+                std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t)); 
 
-                if(magic == GET_VEL || magic == GET_POS){ // if magic matches one of the two cases
+                if(magic == GET_VEL || magic == GET_POS){ 
                     MotorVelocities mv;
-                    std::memcpy(&mv, rx_buf.data(), packet_size);
+                    std::memcpy(&mv, rx_buf.data() + idx, packet_size); 
                     
-                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + packet_size); // remove packet from buffer
+                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); 
                     
                     RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Got correct packet, magic: 0x%lX", magic);
 
@@ -192,8 +192,8 @@ namespace otto_hardware {
 
                     break; // found packet, so exit while "search" loop
                 }
+                idx--; 
             }
-            idx--; // move backwards by a byte
         }
 
         return hardware_interface::return_type::OK;
