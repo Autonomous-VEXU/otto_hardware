@@ -157,10 +157,13 @@ namespace otto_hardware {
                 do {bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf));
                     total_bytes_read += bytes_read;
                     rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "read_bytes (while loop) = %ld", bytes_read);
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "total_read_bytes (while loop) = %ld", total_bytes_read);
                 } while (bytes_read > 0);
+                
                
                 if (total_bytes_read > 0) {
-                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %ld bytes", total_bytes_read);
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "total_read_bytes = %ld", total_bytes_read);
                 }
             }
 
