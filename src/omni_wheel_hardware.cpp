@@ -155,7 +155,7 @@ namespace otto_hardware {
         }
 
         if (rx_buf.size() >= packet_size) {
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
+            // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
             // look through everyhting in buffer
             for (size_t idx = 0; idx <= rx_buf.size() - sizeof(uint64_t); ++idx) {
@@ -212,8 +212,8 @@ namespace otto_hardware {
                 
                 // mor debugging prints
                 std::stringstream hex_stream;
-                hex_stream << "first 36 bytes from buffer: ";
-                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(36)); ++i) {
+                hex_stream << "first 100 bytes from buffer: ";
+                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(100)); ++i) {
                     hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
                 }
                 RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
