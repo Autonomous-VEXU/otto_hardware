@@ -155,12 +155,11 @@ namespace otto_hardware {
         if (rx_buf.size() >= packet_size) {
             RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
-            // Search from beginning to end for valid packet
             for (size_t idx = 0; idx <= rx_buf.size() - packet_size; ++idx) {
                 uint64_t magic;
                 std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                 
-                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Checking idx %zu, magic: 0x%016lX", idx, magic);
+                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "on idx %zu, magic: 0x%016lX", idx, magic);
                 
                 if (magic == GET_VEL || magic == GET_POS) {
                     MotorVelocities mv;
