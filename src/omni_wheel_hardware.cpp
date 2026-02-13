@@ -276,7 +276,7 @@ namespace otto_hardware {
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);  
         
-        //serial.flushReceiver();
+        serial.flushReceiver();
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }
