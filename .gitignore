@@ -52,3 +52,6 @@ CATKIN_IGNORE
 
 /.vscode
 /log
+
+# kylie's project notes VSCode extension
+/.pnotes

@@ -152,7 +152,8 @@ namespace otto_hardware {
                 //std::vector<uint8_t> temp_buf(available);
                 uint8_t temp_buf[128];
                 size_t total_bytes_read = 0; 
-                while (size_t bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf)) && bytes_read > 0){
+                size_t bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf));
+                while (bytes_read > 0){
                     total_bytes_read += bytes_read;
                     rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
                 }
@@ -162,7 +163,6 @@ namespace otto_hardware {
                     // rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
                 }
             }
-
 
             if (rx_buf.size() > packet_size) {
                 int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
