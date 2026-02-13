@@ -17,8 +17,6 @@ namespace otto_hardware {
     static std::string serial_port = "/dev/ttyTHS1";
     static int baud = 115200;
 
-    static std::vector<uint8_t> rx_buf; // global buffer
-
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
     constexpr uint64_t GET_VEL  = 0xF81CB00B1350C0CA;
@@ -131,6 +129,7 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
+        static std::vector<uint8_t> rx_buf; 
         
         if (!serial.isDeviceOpen()){ 
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Device not open, cannot read data");
@@ -151,15 +150,15 @@ namespace otto_hardware {
             if (available > 0) {
                 uint8_t temp_buf[128];
                 size_t total_bytes_read = 0; 
-                size_t bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf));
-                while (bytes_read > 0){
+                size_t bytes_read;
+
+                do {bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf));
                     total_bytes_read += bytes_read;
                     rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
-                }
-
+                } while (bytes_read > 0);
+               
                 if (total_bytes_read > 0) {
                     RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %ld bytes", total_bytes_read);
-                    rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
                 }
             }
 
