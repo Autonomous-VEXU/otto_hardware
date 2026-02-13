@@ -146,26 +146,34 @@ namespace otto_hardware {
         // timeout loop
         while (std::chrono::steady_clock::now() - start_time < TIMEOUT) {
             // read all data available
-            int available = serial.available();
-            if (available > 0) {
-                std::vector<uint8_t> temp_buf(available);
-                int bytes_read = serial.readBytes(temp_buf.data(), available);
-                if (bytes_read > 0) {
-                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %d bytes", bytes_read);
-                    rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
-                }
-            }
+            //int available = serial.available();
 
-            const size_t MAX_BUFFER_SIZE = packet_size * 4; // overflow (maybe should be longer?)
-            if (rx_buf.size() > MAX_BUFFER_SIZE) {
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow");
-                rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
-            }
+            //if (available > 0) {
+                //std::vector<uint8_t> temp_buf(available);
+                uint8_t temp_buf[128];
+                size_t total_bytes_read = 0; 
+                while (size_t bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf)) && bytes_read > 0){
+                    total_bytes_read += bytes_read;
+                    rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
+                }
+
+                if (total_bytes_read > 0) {
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %d bytes", total_bytes_read);
+                    // rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
+                }
+            //}
+
+            // overflow (if needed)
+            // const size_t MAX_BUFFER_SIZE = packet_size * 4; 
+            // if (rx_buf.size() > MAX_BUFFER_SIZE) {
+            //     RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow");
+            //     rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
+            // }
 
             if (rx_buf.size() > packet_size) {
                 int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
                 
-                while (idx > 0) {
+                while (idx >= 0) {
                     uint64_t magic; // check for magic at this pos
                     std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                     
