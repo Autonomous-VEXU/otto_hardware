@@ -254,6 +254,8 @@ namespace otto_hardware {
             intake_cmd_[i] = 0.0;
         }
 
+        serial.flushReceiver();
+
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successfully configured!");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -275,8 +277,7 @@ namespace otto_hardware {
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);  
         
-        //NOTE: this causes a crash for some reason?
-        //serial.flushReceiver();
+        serial.flushReceiver();
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }
