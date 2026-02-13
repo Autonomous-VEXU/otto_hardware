@@ -149,7 +149,6 @@ namespace otto_hardware {
             int available = serial.available();
 
             if (available > 0) {
-                //std::vector<uint8_t> temp_buf(available);
                 uint8_t temp_buf[128];
                 size_t total_bytes_read = 0; 
                 size_t bytes_read = serial.readBytes(temp_buf, sizeof(temp_buf));
@@ -160,7 +159,7 @@ namespace otto_hardware {
 
                 if (total_bytes_read > 0) {
                     RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %ld bytes", total_bytes_read);
-                    // rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
+                    rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
                 }
             }
 
