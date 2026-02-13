@@ -164,13 +164,12 @@ namespace otto_hardware {
                     RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "total_read_bytes (while loop) = %ld", total_bytes_read);
                 } while (bytes_read > 0);
                 
-               
                 if (total_bytes_read > 0) {
                     RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "total_read_bytes = %ld", total_bytes_read);
                 }
             }
 
-            if (rx_buf.size() > packet_size) {
+            if (rx_buf.size() >= packet_size) {
                 RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "second if statement (line 172)");
                 int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
                 
