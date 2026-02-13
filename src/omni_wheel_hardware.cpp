@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <chrono>
+#include <thread>
 
 #include "seriallib.h"
 
@@ -130,78 +132,85 @@ namespace otto_hardware {
 
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
         
-        if (!serial.isDeviceOpen()){ // error handle for 
+        if (!serial.isDeviceOpen()){ 
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Device not open, cannot read data");
             return hardware_interface::return_type::ERROR;
         }
         
-        int available = serial.available();
-        const size_t packet_size = sizeof(MotorVelocities); // should be like 36 bytes i think
+        const size_t packet_size = sizeof(MotorVelocities);
 
-        if (available > 0){ 
-            std::vector<uint8_t> temp_buf(available);
-            int bytes_read = serial.readBytes(temp_buf.data(), available);
-            if (bytes_read > 0) { 
-                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Append data to global buffer...");
-                rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
+        // for the timeout loop
+        const auto TIMEOUT = std::chrono::milliseconds(100);
+        auto start_time = std::chrono::steady_clock::now();
+
+        // timeout loop
+        while (std::chrono::steady_clock::now() - start_time < TIMEOUT) {
+            // read all data available
+            int available = serial.available();
+            if (available > 0) {
+                std::vector<uint8_t> temp_buf(available);
+                int bytes_read = serial.readBytes(temp_buf.data(), available);
+                if (bytes_read > 0) {
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %d bytes", bytes_read);
+                    rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
+                }
             }
 
-            const size_t MAX_BUFFER_SIZE = packet_size * 3; 
+            const size_t MAX_BUFFER_SIZE = packet_size * 4; // overflow (maybe should be longer?)
             if (rx_buf.size() > MAX_BUFFER_SIZE) {
                 RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow");
                 rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
             }
-        }
 
-        if (rx_buf.size() >= packet_size){
-            
-            // start form end packet position
-            int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
-
-            while(idx>=0){
-
-                uint64_t magic;
-                std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t)); 
-
-                if(magic == GET_VEL || magic == GET_POS){ 
-                    MotorVelocities mv;
-                    std::memcpy(&mv, rx_buf.data() + idx, packet_size); 
+            if (rx_buf.size() > packet_size) {
+                int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
+                
+                while (idx > 0) {
+                    uint64_t magic; // check for magic at this pos
+                    std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                     
-                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); 
-                    
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Got correct packet, magic: 0x%lX", magic);
+                    if (magic == GET_VEL || magic == GET_POS){ // got valid packet
+                        MotorVelocities mv;
+                        std::memcpy(&mv, rx_buf.data() + idx, packet_size);
+                        
+                        rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size);
+                        
+                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Got packet, magic: 0x%016lX", magic);
 
-                   if (mv.magic == GET_VEL) {
-                        vel_[0] = mv.fl;
-                        vel_[1] = mv.fr;
-                        vel_[2] = mv.bl;
-                        vel_[3] = mv.br;
+                        if (mv.magic == GET_VEL){
+                            vel_[0] = mv.fl;
+                            vel_[1] = mv.fr;
+                            vel_[2] = mv.bl;
+                            vel_[3] = mv.br;
 
-                        intake_vel_[0] = mv.intake_1;
-                        intake_vel_[1] = mv.intake_2;
-                        intake_vel_[2] = mv.intake_3;
+                            intake_vel_[0] = mv.intake_1;
+                            intake_vel_[1] = mv.intake_2;
+                            intake_vel_[2] = mv.intake_3;
 
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Velocity Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", vel_[0], vel_[1], vel_[2], vel_[3]);
+                            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
 
-                    } else if (mv.magic == GET_POS) {
-                        pos_[0] = mv.fl;
-                        pos_[1] = mv.fr;
-                        pos_[2] = mv.bl;
-                        pos_[3] = mv.br;
+                        } else if (mv.magic == GET_POS){
+                            pos_[0] = mv.fl;
+                            pos_[1] = mv.fr;
+                            pos_[2] = mv.bl;
+                            pos_[3] = mv.br;
 
-                        intake_pos_[0] = mv.intake_1;
-                        intake_pos_[1] = mv.intake_2;
-                        intake_pos_[2] = mv.intake_3;
+                            intake_pos_[0] = mv.intake_1;
+                            intake_pos_[1] = mv.intake_2;
+                            intake_pos_[2] = mv.intake_3;
 
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Position Debug: front_l=%.2f, front_r=%.2f, back_l=%.2f, back_r=%.2f ", pos_[0], pos_[1], pos_[2], pos_[3]);
+                            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
+                        }
+                        return hardware_interface::return_type::OK;
                     }
-
-                    break; // found packet, so exit while "search" loop
+                    idx--;
                 }
-                idx--; 
             }
-        }
 
+            std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
+        }
+        
+        RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "timout occured");
         return hardware_interface::return_type::OK;
     }
 
