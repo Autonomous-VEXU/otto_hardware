@@ -142,7 +142,7 @@ namespace otto_hardware {
         const size_t packet_size = sizeof(MotorVelocities);
 
         // for the timeout loop
-        const auto TIMEOUT = std::chrono::milliseconds(50);
+        const auto TIMEOUT = std::chrono::milliseconds(9);
         auto start_time = std::chrono::steady_clock::now();
 
         // timeout loop
