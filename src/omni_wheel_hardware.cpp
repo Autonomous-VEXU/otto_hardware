@@ -206,9 +206,9 @@ namespace otto_hardware {
                 }
             }
             
-            
-            if (rx_buf.size() > packet_size * 3) {
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow at %zu bytes. packet not found", rx_buf.size());
+            constexpr size_t MAX_BUFFER_SIZE = packet_size * 3;
+            if (rx_buf.size() > MAX_BUFFER_SIZE) {
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
                 
                 // mor debugging prints
                 std::stringstream hex_stream;
