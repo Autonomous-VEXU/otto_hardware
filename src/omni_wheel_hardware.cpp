@@ -131,6 +131,7 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "read() called");
         
         
         if (!serial.isDeviceOpen()){ 
@@ -146,10 +147,12 @@ namespace otto_hardware {
 
         // timeout loop
         while (std::chrono::steady_clock::now() - start_time < TIMEOUT) {
+            RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "in timeout loop (line 150)");
             // read all data available
             int available = serial.available();
 
             if (available > 0) {
+                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "is available");
                 uint8_t temp_buf[128];
                 size_t total_bytes_read = 0; 
                 size_t bytes_read;
@@ -168,9 +171,11 @@ namespace otto_hardware {
             }
 
             if (rx_buf.size() > packet_size) {
+                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "second if statement (line 172)");
                 int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
                 
                 while (idx >= 0) {
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "checking magic");
                     uint64_t magic; // check for magic at this pos
                     std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                     
@@ -213,6 +218,7 @@ namespace otto_hardware {
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
+            RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "sleep");
         }
         
         RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "timout occured");
@@ -220,6 +226,7 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "write occured (line 229)");
 
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
