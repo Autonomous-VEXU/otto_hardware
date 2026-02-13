@@ -202,11 +202,11 @@ namespace otto_hardware {
 
                         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
                     }
-                    return hardware_interface::return_type::OK;
+                    break; // should not return ok...
                 }
             }
             
-            constexpr size_t MAX_BUFFER_SIZE = packet_size * 3;
+            constexpr size_t MAX_BUFFER_SIZE = packet_size * 10;
             if (rx_buf.size() > MAX_BUFFER_SIZE) {
                 RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
                 
@@ -218,7 +218,8 @@ namespace otto_hardware {
                 }
                 RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
                 
-                rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
+                rx_buf.clear();
+                //rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
             }
         }
         
