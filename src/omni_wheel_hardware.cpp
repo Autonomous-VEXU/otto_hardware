@@ -44,6 +44,26 @@ namespace otto_hardware {
             - verify that the joints have the correct number and type of command/state interfaces
         */
 
+        // show the magic numbers in other format so i can compare my recieved data with it
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
+
+        // convert to little endian
+        uint8_t* pos_bytes = (uint8_t*)&GET_POS;
+        uint8_t* vel_bytes = (uint8_t*)&GET_VEL;
+
+        char pos_hex[30], vel_hex[30];
+        snprintf(pos_hex, sizeof(pos_hex), "%02x %02x %02x %02x %02x %02x %02x %02x",
+                pos_bytes[0], pos_bytes[1], pos_bytes[2], pos_bytes[3],
+                pos_bytes[4], pos_bytes[5], pos_bytes[6], pos_bytes[7]);
+        snprintf(vel_hex, sizeof(vel_hex), "%02x %02x %02x %02x %02x %02x %02x %02x",
+                vel_bytes[0], vel_bytes[1], vel_bytes[2], vel_bytes[3],
+                vel_bytes[4], vel_bytes[5], vel_bytes[6], vel_bytes[7]);
+
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
+
         if (hardware_interface::SystemInterface::on_init(params) != hardware_interface::CallbackReturn::SUCCESS){
             return hardware_interface::CallbackReturn::ERROR;
         }
