@@ -133,7 +133,7 @@ namespace otto_hardware {
     hardware_interface::return_type OmniWheelHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
         RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "read() called");
         
-        
+
         if (!serial.isDeviceOpen()){ 
             RCLCPP_ERROR(rclcpp::get_logger("OmniWheelHardware"), "Device not open, cannot read data");
             return hardware_interface::return_type::ERROR;
@@ -142,11 +142,11 @@ namespace otto_hardware {
         const size_t packet_size = sizeof(MotorVelocities);
 
         // for the timeout loop
-        const auto TIMEOUT = std::chrono::milliseconds(9);
+        const auto TIMEOUT = std::chrono::milliseconds(5);
         auto start_time = std::chrono::steady_clock::now();
 
         // timeout loop
-        while (std::chrono::steady_clock::now() - start_time < TIMEOUT) {
+        while (std::chrono::steady_clock::now() - start_time < TIMEOUT){
             RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "in timeout loop (line 150)");
             // read all data available
             int available = serial.available();
@@ -264,7 +264,9 @@ namespace otto_hardware {
             intake_cmd_[i] = 0.0;
         }
 
+        // clear anything remaining in buffer
         serial.flushReceiver();
+        rx_buf.clear();
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successfully configured!");
         return hardware_interface::CallbackReturn::SUCCESS;
@@ -287,7 +289,9 @@ namespace otto_hardware {
         
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Successful connection to VEX Brain on port: %s\n", SERIAL_PORT);  
         
+        // clear anything remaining in buffer
         serial.flushReceiver();
+        rx_buf.clear();
 
         return hardware_interface::CallbackReturn::SUCCESS;
     }
