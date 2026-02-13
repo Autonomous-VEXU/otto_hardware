@@ -158,17 +158,11 @@ namespace otto_hardware {
                 }
 
                 if (total_bytes_read > 0) {
-                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %d bytes", total_bytes_read);
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "Read %ld bytes", total_bytes_read);
                     // rx_buf.insert(rx_buf.end(), temp_buf.begin(), temp_buf.begin() + bytes_read);
                 }
             //}
 
-            // overflow (if needed)
-            // const size_t MAX_BUFFER_SIZE = packet_size * 4; 
-            // if (rx_buf.size() > MAX_BUFFER_SIZE) {
-            //     RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow");
-            //     rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
-            // }
 
             if (rx_buf.size() > packet_size) {
                 int idx = static_cast<int>(rx_buf.size()) - static_cast<int>(packet_size);
