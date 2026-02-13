@@ -7,6 +7,8 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <iomanip>
+#include <sstream>
 
 #include "seriallib.h"
 
@@ -155,20 +157,27 @@ namespace otto_hardware {
         if (rx_buf.size() >= packet_size) {
             RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
-            for (size_t idx = 0; idx <= rx_buf.size() - packet_size; ++idx) {
+            // look through everyhting in buffer
+            for (size_t idx = 0; idx <= rx_buf.size() - sizeof(uint64_t); ++idx) {
                 uint64_t magic;
                 std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                 
-                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "on idx %zu, magic: 0x%016lX", idx, magic);
-                
                 if (magic == GET_VEL || magic == GET_POS) {
+                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
+                    
+                    // get more data for packet (36 bytes im pretty sure)
+                    if (idx + packet_size > rx_buf.size()) {
+                        RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "magic at idx %zu,  %zu more bytes for packet", 
+                            idx, (idx + packet_size) - rx_buf.size());
+                        break;
+                    }
+                    
+                    // complete packet?
                     MotorVelocities mv;
                     std::memcpy(&mv, rx_buf.data() + idx, packet_size);
                     
-                    // Remove processed data
-                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size);
-                    
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "packet found: magic: 0x%016lX", magic);
+                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); // erase stuff
+                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
 
                     if (mv.magic == GET_VEL){
                         vel_[0] = mv.fl;
@@ -197,9 +206,18 @@ namespace otto_hardware {
                 }
             }
             
-            // overflow
-            if (rx_buf.size() > packet_size * 2) {
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow, erasing %zu to %zu", rx_buf.size(), packet_size);
+            
+            if (rx_buf.size() > packet_size * 3) {
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow at %zu bytes. packet not found", rx_buf.size());
+                
+                // mor debugging prints
+                std::stringstream hex_stream;
+                hex_stream << "first 36 bytes from buffer: ";
+                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(36)); ++i) {
+                    hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
+                }
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
+                
                 rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
             }
         }
