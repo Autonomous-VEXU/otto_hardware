@@ -150,12 +150,12 @@ namespace otto_hardware {
             
             if (bytes_read > 0) {
                 rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
-                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "read %zu bytes, buffer size now: %zu", bytes_read, rx_buf.size());
+                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "read %zu bytes, buffer size now: %zu", bytes_read, rx_buf.size());
             }
         }
 
         if (rx_buf.size() >= packet_size) {
-            RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
+            RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
             // look through everyhting in buffer
             for (size_t idx = 0; idx <= rx_buf.size() - sizeof(uint64_t); ++idx) {
@@ -163,7 +163,7 @@ namespace otto_hardware {
                 std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                 
                 if (magic == GET_VEL || magic == GET_POS) {
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
                     
                     // get more data for packet (36 bytes im pretty sure)
                     if (idx + packet_size > rx_buf.size()) {
@@ -177,7 +177,7 @@ namespace otto_hardware {
                     std::memcpy(&mv, rx_buf.data() + idx, packet_size);
                     
                     rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); // erase stuff
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
+                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
 
                     if (mv.magic == GET_VEL){
                         vel_[0] = mv.fl;
@@ -189,7 +189,7 @@ namespace otto_hardware {
                         intake_vel_[1] = mv.intake_2;
                         intake_vel_[2] = mv.intake_3;
 
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
+                        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
 
                     } else if (mv.magic == GET_POS){
                         pos_[0] = mv.fl;
@@ -201,7 +201,7 @@ namespace otto_hardware {
                         intake_pos_[1] = mv.intake_2;
                         intake_pos_[2] = mv.intake_3;
 
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
+                        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
                     }
                     break; // should not return ok...
                 }
@@ -254,9 +254,9 @@ namespace otto_hardware {
     hardware_interface::CallbackReturn OmniWheelHardware::on_configure(const rclcpp_lifecycle::State & /*previous_state*/){
 
         // show the magic numbers in other format so i can compare my recieved data with it
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
 
         // convert to little endian
         uint8_t* pos_bytes = (uint8_t*)&GET_POS;
@@ -270,8 +270,8 @@ namespace otto_hardware {
                 vel_bytes[0], vel_bytes[1], vel_bytes[2], vel_bytes[3],
                 vel_bytes[4], vel_bytes[5], vel_bytes[6], vel_bytes[7]);
 
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
 
 
         // reset parameters
