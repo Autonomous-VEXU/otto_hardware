@@ -146,7 +146,7 @@ namespace otto_hardware {
 
             int bytes_read = serial.readBytes(&mv, sizeof(MotorVelocities));
 
-            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF81C){
+            if (bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_VEL){
                 vel_[0] = mv.fl;
                 vel_[1] = mv.fr;
                 vel_[2] = mv.bl;
@@ -156,7 +156,7 @@ namespace otto_hardware {
                 intake_vel_[1] = mv.intake_2;
                 intake_vel_[2] = mv.intake_3;
 
-            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == 0xF23B){
+            }else if(bytes_read == static_cast<int>(sizeof(MotorVelocities)) && mv.magic == GET_POS){
                 pos_[0] = mv.fl;
                 pos_[1] = mv.fr;
                 pos_[2] = mv.bl;
@@ -173,7 +173,6 @@ namespace otto_hardware {
         
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "write occured (line 229)");
 
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
@@ -197,27 +196,6 @@ namespace otto_hardware {
     }
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_configure(const rclcpp_lifecycle::State & /*previous_state*/){
-
-        // show the magic numbers in other format so i can compare my recieved data with it
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
-
-        // convert to little endian
-        uint8_t* pos_bytes = (uint8_t*)&GET_POS;
-        uint8_t* vel_bytes = (uint8_t*)&GET_VEL;
-
-        char pos_hex[30], vel_hex[30];
-        snprintf(pos_hex, sizeof(pos_hex), "%02x %02x %02x %02x %02x %02x %02x %02x",
-                pos_bytes[0], pos_bytes[1], pos_bytes[2], pos_bytes[3],
-                pos_bytes[4], pos_bytes[5], pos_bytes[6], pos_bytes[7]);
-        snprintf(vel_hex, sizeof(vel_hex), "%02x %02x %02x %02x %02x %02x %02x %02x",
-                vel_bytes[0], vel_bytes[1], vel_bytes[2], vel_bytes[3],
-                vel_bytes[4], vel_bytes[5], vel_bytes[6], vel_bytes[7]);
-
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
-
 
         // reset parameters
         for (size_t i = 0; i < 4; ++i) {
