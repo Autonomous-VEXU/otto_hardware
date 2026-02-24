@@ -6,6 +6,24 @@ URDF Plugin Name:`otto_hardware/OmniWheelhardware`
 ## omni_wheel_hardware
 Hardware interface system component.
 
+### Structs and Magics
+
+The main packet structure is called `MotorData`
+
+```cpp
+struct __attribute__((packed)) MotorData{
+    uint64_t magic;
+    float fl; // front left
+    float fr; // front right
+    float bl; // back left
+    float br; // back right
+
+    float intake_1; // low intake motor
+    float intake_2; // mid intake motor
+    float intake_3; // high intake motor
+};
+```
+
 ### CallBack Return Methods:
 - **`on_init()`**
     - runs **before** the hardware is actually connected to
@@ -33,29 +51,21 @@ Hardware interface system component.
 - **`read()`**
     - Read both position and velocity state interfaces from the connected hardware and update both state interfaces
 - **`write()`**
-    - Write velocity commands to the connected hardware in the form of the `MotorVelocity` struct shown below:
-
-```cpp
-struct MotorVelocities {
-  uint16_t magic; // 0xFEFA
-  double fl; // forward left wheel
-  double fr; // forward right wheel
-  double bl; // back left wheel
-  double br; // back right wheel
-};
-```
+    - Write velocity commands to the connected hardware using the `MotorData` struct shown above.
 
 ## URDF/xacro configuration
 
-Example `ros2_control` tag for this hardware interface + the omni wheel drive controller from `ros2_controllers`:
+Example `ros2_control` tag for this hardware interface + the omni wheel drive controller from `ros2_controllers` and a few velocity controllers for intake motors:
 
 ```xml
-  <ros2_control name="DriveSystem" type="system">
+  <ros2_control name="OttoSystem" type="system">
         <hardware>
             <plugin>otto_hardware/OmniWheelHardware</plugin>
             <param name='serial_port'>/dev/ttyUSB0</param>
             <param name='baud_rate'>115200</param>
         </hardware>
+
+        <!--Omni Wheel Drive Controller Joints-->
         <joint name="wheel_1">
             <command_interface name="velocity"/>
             <state_interface name="position"/>
@@ -72,6 +82,25 @@ Example `ros2_control` tag for this hardware interface + the omni wheel drive co
             <state_interface name="velocity"/>
         </joint>
         <joint name="wheel_4">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <!-- Intake Motor Joints-->
+        <joint name="intake_1">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="intake_2">
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="intake_3">
             <command_interface name="velocity"/>
             <state_interface name="position"/>
             <state_interface name="velocity"/>

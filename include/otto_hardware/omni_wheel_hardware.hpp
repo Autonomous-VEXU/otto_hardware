@@ -18,12 +18,33 @@ public:
     OmniWheelHardware() = default;
 
     hardware_interface::CallbackReturn on_init(hardware_interface::HardwareComponentInterfaceParams & params);
+    /**
+     * @brief initializes the hardware interface by resetting and declaring various variables.
+     *
+     * Initialization includes resetting the command and state variables, 
+     * setting the serial port & baud rate, and confirming the number of joints & interfaces matches 
+     * the expected number.
+     * 
+     * @return hardware_interface::CallBackReturn::SUCCESS
+    */
 
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
+    /**
+     * @brief exports the state interfaces for each defined joint
+    */
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
-    
+    /**
+     * @brief exports the command interfaces for each defined joint
+    */
+
     hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
+    /**
+     * @brief reads packets being sent from the connected hardware
+    */
     hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
+    /**
+     * @brief writes packets with motor velocities to the connected hardware
+    */
 
     hardware_interface::CallbackReturn on_configure(const rclcpp_lifecycle::State & /*previous_state*/);
     hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & /*previous_state*/);
