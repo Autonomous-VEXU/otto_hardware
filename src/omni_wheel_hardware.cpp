@@ -17,7 +17,7 @@ serialib serial;
 namespace otto_hardware {
 
     // defaults for port config
-    static std::string serial_port = "/dev/ttyTHS1";
+    static std::string serial_port = "/dev/ttyACM0"; // raspberry pi output
     static int baud = 115200;
 
     // global buffer
