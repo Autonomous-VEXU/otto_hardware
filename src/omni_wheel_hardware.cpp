@@ -1,3 +1,4 @@
+
 #include "otto_hardware/omni_wheel_hardware.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include <hardware_interface/system_interface.hpp>
@@ -16,14 +17,14 @@ serialib serial;
 
 namespace otto_hardware {
 
-    static std::string serial_port = "/dev/ttyTHS1";
+    static std::string serial_port = "/dev/ttyACM1";
     static int baud = 115200;
 
     static std::vector<uint8_t> rx_buf; 
 
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
-    constexpr uint64_t GET_VEL  = 0xF81CB00B1350C0CA;
+    constexpr uint64_t GET_VEL  = 0xF81CB3924EA7C0CA;
 
     struct __attribute__((packed)) MotorVelocities{
         uint64_t magic;
@@ -272,7 +273,6 @@ namespace otto_hardware {
 
         RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
         RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
-
 
         // reset parameters
         for (size_t i = 0; i < 4; ++i) {
