@@ -210,15 +210,15 @@ namespace otto_hardware {
             
             constexpr size_t MAX_BUFFER_SIZE = packet_size * 3;
             if (rx_buf.size() > MAX_BUFFER_SIZE) {
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
+                // RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
                 
                 // mor debugging prints
-                std::stringstream hex_stream;
-                hex_stream << "first 36 bytes from buffer: ";
-                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(36)); ++i) {
-                    hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
-                }
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
+                // std::stringstream hex_stream;
+                // hex_stream << "first 36 bytes from buffer: ";
+                // for (size_t i = 0; i < std::min(rx_buf.size(), size_t(36)); ++i) {
+                //     hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
+                // }
+                // //RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
                 
                 rx_buf.clear();
                 //rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
