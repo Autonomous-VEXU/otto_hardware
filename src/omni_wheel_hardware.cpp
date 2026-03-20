@@ -26,16 +26,24 @@ namespace otto_hardware {
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
     constexpr uint64_t GET_VEL  = 0xF81CB3924EA7C0CA;
 
-    struct __attribute__((packed)) MotorVelocities{
+    struct __attribute__((packed)) MotorEncoderPacket {
         uint64_t magic;
         float fl;
         float fr;
         float bl;
         float br;
+    };
 
-        float intake_1;
-        float intake_2;
-        float intake_3;
+    struct __attribute__((packed)) MotorPowerPacket {
+        uint64_t magic;
+        int8_t fl;
+        int8_t fr;
+        int8_t bl;
+        int8_t br;
+
+        int8_t intake_1;
+        int8_t intake_2;
+        int8_t intake_3;
     };
 
 
@@ -141,7 +149,7 @@ namespace otto_hardware {
             return hardware_interface::return_type::ERROR;
         }
         
-        const size_t packet_size = sizeof(MotorVelocities);
+        const size_t packet_size = sizeof(MotorEncoderPacket);
 
         int available = serial.available();
         if (available > 0) {
@@ -166,7 +174,7 @@ namespace otto_hardware {
                 if (magic == GET_VEL || magic == GET_POS) {
                     RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
                     
-                    // get more data for packet (36 bytes im pretty sure)
+                    // get more data for packet (sizeof(MotorEncoderPacket))
                     if (idx + packet_size > rx_buf.size()) {
                         RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "magic at idx %zu,  %zu more bytes for packet", 
                             idx, (idx + packet_size) - rx_buf.size());
@@ -174,7 +182,7 @@ namespace otto_hardware {
                     }
                     
                     // complete packet?
-                    MotorVelocities mv;
+                    MotorEncoderPacket mv;
                     std::memcpy(&mv, rx_buf.data() + idx, packet_size);
                     
                     rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); // erase stuff
@@ -186,10 +194,6 @@ namespace otto_hardware {
                         vel_[2] = mv.bl;
                         vel_[3] = mv.br;
 
-                        intake_vel_[0] = mv.intake_1;
-                        intake_vel_[1] = mv.intake_2;
-                        intake_vel_[2] = mv.intake_3;
-
                         RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
 
                     } else if (mv.magic == GET_POS){
@@ -197,10 +201,6 @@ namespace otto_hardware {
                         pos_[1] = mv.fr;
                         pos_[2] = mv.bl;
                         pos_[3] = mv.br;
-
-                        intake_pos_[0] = mv.intake_1;
-                        intake_pos_[1] = mv.intake_2;
-                        intake_pos_[2] = mv.intake_3;
 
                         RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
                     }
@@ -236,18 +236,18 @@ namespace otto_hardware {
         }
 
         // write information to command interfaces (velocity)
-        MotorVelocities mv;
+        MotorPowerPacket mv;
         mv.magic = SEND_CMD;
-        mv.fl = cmd_[0];
-        mv.fr = cmd_[1];
-        mv.bl = cmd_[2];
-        mv.br = cmd_[3];
+        // Convert rad/sec to I6F2 fixed point to save space
+        mv.fl = static_cast<int8_t>(cmd_[0] * (1 << 2));
+        mv.fr = static_cast<int8_t>(cmd_[1] * (1 << 2));
+        mv.bl = static_cast<int8_t>(cmd_[2] * (1 << 2));
+        mv.br = static_cast<int8_t>(cmd_[3] * (1 << 2));
+        mv.intake_1 = static_cast<int8_t>(intake_cmd_[0] * (1 << 2));
+        mv.intake_2 = static_cast<int8_t>(intake_cmd_[1] * (1 << 2));
+        mv.intake_3 = static_cast<int8_t>(intake_cmd_[2] * (1 << 2));
 
-        mv.intake_1 = intake_cmd_[0];
-        mv.intake_2 = intake_cmd_[1];
-        mv.intake_3 = intake_cmd_[2];
-
-        serial.writeBytes(&mv, sizeof(MotorVelocities)); 
+        serial.writeBytes(&mv, sizeof(MotorPowerPacket)); 
         
         return hardware_interface::return_type::OK;
     }
@@ -300,7 +300,8 @@ namespace otto_hardware {
         const char* SERIAL_PORT = serial_port.c_str(); // convert to char
 
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Opening serial port: %s at %d baud", SERIAL_PORT, baud);
-        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorVelocities struct size: %zu bytes", sizeof(MotorVelocities));
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorPowerPacket struct size: %zu bytes", sizeof(MotorPowerPacket));
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorEncoderPacket struct size: %zu bytes", sizeof(MotorEncoderPacket));
 
         // connection to serial port
         char errorOpening = serial.openDevice(SERIAL_PORT, baud);
