@@ -35,10 +35,10 @@ private:
     std::array<double, 4> vel_{};
     std::array<double, 4> cmd_{};
     std::array<std::string, 4> joint_names_{{
-        "chassis_to_wheel_a",
-        "chassis_to_wheel_b",
-        "chassis_to_wheel_c",
-        "chassis_to_wheel_d"
+        "front_left_wheel_joint",
+        "back_left_wheel_joint",
+        "back_right_wheel_joint",
+        "front_right_wheel_joint"
     }};
 
     std::array<double, 3> intake_pos_{};
