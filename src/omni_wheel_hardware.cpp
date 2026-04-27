@@ -25,6 +25,7 @@ namespace otto_hardware {
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
     constexpr uint64_t GET_VEL  = 0xF81CB3924EA7C0CA;
+    constexpr uint64_t GET_GPS = 0x9F3C7A2E8B5D1046;
 
     struct __attribute__((packed)) MotorEncoderPacket {
         uint64_t magic;
@@ -46,6 +47,12 @@ namespace otto_hardware {
         int8_t intake_3;
     };
 
+    struct __attribute__((packed)) GpsLocation {
+        uint64_t magic;
+        float x_meters;
+        float y_meters;
+        float heading_radians;
+    };
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
         /*  Things that need to occur:
@@ -70,6 +77,11 @@ namespace otto_hardware {
             intake_vel_[i] = 0.0;
             intake_cmd_[i] = 0.0;
         }
+
+        // reset VEX GPS sensor data
+        gps_x_ = 0.0;
+        gps_y_ = 0.0;
+        gps_th_ = 0.0;
 
         auto it = info_.hardware_parameters.find("serial_port"); 
 
@@ -126,6 +138,12 @@ namespace otto_hardware {
             interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_POSITION, &intake_pos_[i]);
             interfaces.emplace_back(intake_joint_names_[i], hardware_interface::HW_IF_VELOCITY, &intake_vel_[i]);
         }
+
+        // not a motor, so just make shit up for the interface name
+        interfaces.emplace_back("vex_gps", "x", &gps_x_);
+        interfaces.emplace_back("vex_gps", "y", &gps_y_);
+        interfaces.emplace_back("vex_gps", "th", &gps_th_);
+        
         return interfaces;
     }
 
@@ -158,6 +176,7 @@ namespace otto_hardware {
             rx_buf.insert(rx_buf.end(), temp_buf, temp_buf + bytes_read);
         }
 
+        const size_t gps_packet_size = sizeof(GpsLocation);
         const size_t packet_size = sizeof(MotorEncoderPacket);
         if (rx_buf.size() < packet_size) {
             return hardware_interface::return_type::OK;
@@ -166,6 +185,7 @@ namespace otto_hardware {
         // Scan the entire buffer for the most recent VEL and POS packets
         ssize_t last_vel_idx = -1;
         ssize_t last_pos_idx = -1;
+        ssize_t last_gps_idx = -1;
         size_t last_packet_end = 0;
 
         for (size_t idx = 0; idx + packet_size <= rx_buf.size(); ++idx) {
@@ -178,6 +198,9 @@ namespace otto_hardware {
             } else if (magic == GET_POS) {
                 last_pos_idx = idx;
                 last_packet_end = idx + packet_size;
+            } else if(magic == GET_GPS){
+                last_gps_idx = idx; 
+                last_packet_end = idx + gps_packet_size;
             }
         }
 
@@ -201,6 +224,16 @@ namespace otto_hardware {
             pos_[2] = mv.bl;
             pos_[3] = mv.br;
             RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
+        }
+
+        // Extract the most recent GPS packet
+        if (last_gps_idx >= 0){
+            GpsLocation gps;
+            std::memcpy(&gps, rx_buf.data() + last_gps_idx, gps_packet_size);
+            gps_x_ = gps.x_meters;
+            gps_y_ = gps.y_meters;
+            gps_th_ = gps.heading_radians;
+            RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "GPS: x=%.2f, y=%.2f, th=%.2f", gps_x_, gps_y_, gps_th_);
         }
 
         // Discard everything up through the last packet we consumed.
@@ -272,6 +305,11 @@ namespace otto_hardware {
             intake_cmd_[i] = 0.0;
         }
 
+        // reset VEX GPS sensor data
+        gps_x_ = 0.0;
+        gps_y_ = 0.0;
+        gps_th_ = 0.0;
+
         // clear anything remaining in buffer
         serial.flushReceiver();
         rx_buf.clear();
@@ -286,6 +324,7 @@ namespace otto_hardware {
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "Opening serial port: %s at %d baud", SERIAL_PORT, baud);
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorPowerPacket struct size: %zu bytes", sizeof(MotorPowerPacket));
         RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "MotorEncoderPacket struct size: %zu bytes", sizeof(MotorEncoderPacket));
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GpsLocation struct size: %zu bytes", sizeof(GpsLocation));
 
         // connection to serial port
         char errorOpening = serial.openDevice(SERIAL_PORT, baud);

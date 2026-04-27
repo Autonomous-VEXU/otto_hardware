@@ -50,6 +50,13 @@ private:
         "intake_3"
     }};
 
+    double gps_x_{};
+    double gps_y_{};
+    double gps_th_{};
+    std::array<std::string, 1> sensor_name_{{
+        "vex_gps"
+    }};
+
     // parameters from URDF
     int baud_rate_;
     std::string serial_port_;
