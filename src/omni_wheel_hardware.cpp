@@ -1,4 +1,3 @@
-
 #include "otto_hardware/omni_wheel_hardware.hpp"
 #include "pluginlib/class_list_macros.hpp"
 #include <hardware_interface/system_interface.hpp>
@@ -17,26 +16,27 @@ serialib serial;
 
 namespace otto_hardware {
 
-    static std::string serial_port = "/dev/ttyACM1";
+    static std::string serial_port = "/dev/ttyTHS1";
     static int baud = 115200;
 
     static std::vector<uint8_t> rx_buf; 
 
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
-    constexpr uint64_t GET_VEL  = 0xF81CB3924EA7C0CA;
+    constexpr uint64_t GET_VEL  = 0xF81CB00B1350C0CA;
 
-    struct __attribute__((packed)) MotorVelocities{
-        uint64_t magic;
-        float fl;
-        float fr;
-        float bl;
-        float br;
-
-        float intake_1;
-        float intake_2;
-        float intake_3;
+    #pragma pack(push, 1)  // Force 1-byte alignment (removes all padding)
+    struct MotorVelocities { 
+        uint64_t magic; 
+        float fl; 
+        float fr; 
+        float bl; 
+        float br; 
+        float intake_1; 
+        float intake_2; 
+        float intake_3; 
     };
+    #pragma pack(pop)   // Restore original compiler alignment settings
 
 
     hardware_interface::CallbackReturn OmniWheelHardware::on_init(hardware_interface::HardwareComponentInterfaceParams & params){
@@ -151,12 +151,12 @@ namespace otto_hardware {
             
             if (bytes_read > 0) {
                 rx_buf.insert(rx_buf.end(), std::begin(temp_buf), std::begin(temp_buf) + bytes_read);
-                RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "read %zu bytes, buffer size now: %zu", bytes_read, rx_buf.size());
+                RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "read %zu bytes, buffer size now: %zu", bytes_read, rx_buf.size());
             }
         }
 
         if (rx_buf.size() >= packet_size) {
-            RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
+            // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
             // look through everyhting in buffer
             for (size_t idx = 0; idx <= rx_buf.size() - sizeof(uint64_t); ++idx) {
@@ -164,7 +164,7 @@ namespace otto_hardware {
                 std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                 
                 if (magic == GET_VEL || magic == GET_POS) {
-                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
+                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
                     
                     // get more data for packet (36 bytes im pretty sure)
                     if (idx + packet_size > rx_buf.size()) {
@@ -178,7 +178,7 @@ namespace otto_hardware {
                     std::memcpy(&mv, rx_buf.data() + idx, packet_size);
                     
                     rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); // erase stuff
-                    RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
+                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
 
                     if (mv.magic == GET_VEL){
                         vel_[0] = mv.fl;
@@ -190,8 +190,7 @@ namespace otto_hardware {
                         intake_vel_[1] = mv.intake_2;
                         intake_vel_[2] = mv.intake_3;
 
-                        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
-
+                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
                     } else if (mv.magic == GET_POS){
                         pos_[0] = mv.fl;
                         pos_[1] = mv.fr;
@@ -202,23 +201,23 @@ namespace otto_hardware {
                         intake_pos_[1] = mv.intake_2;
                         intake_pos_[2] = mv.intake_3;
 
-                        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
+                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
                     }
                     break; // should not return ok...
                 }
             }
             
-            constexpr size_t MAX_BUFFER_SIZE = packet_size * 3;
+            constexpr size_t MAX_BUFFER_SIZE = packet_size * 10;
             if (rx_buf.size() > MAX_BUFFER_SIZE) {
-                // RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
                 
                 // mor debugging prints
-                // std::stringstream hex_stream;
-                // hex_stream << "first 36 bytes from buffer: ";
-                // for (size_t i = 0; i < std::min(rx_buf.size(), size_t(36)); ++i) {
-                //     hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
-                // }
-                // //RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
+                std::stringstream hex_stream;
+                hex_stream << "first 100 bytes from buffer: ";
+                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(100)); ++i) {
+                    hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
+                }
+                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
                 
                 rx_buf.clear();
                 //rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
@@ -229,7 +228,7 @@ namespace otto_hardware {
     }
 
     hardware_interface::return_type OmniWheelHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/){
-        // RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "write occured (line 229)");
+        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "write occured (line 229)");
 
         if (!serial.isDeviceOpen()){
             return hardware_interface::return_type::OK;
@@ -255,9 +254,9 @@ namespace otto_hardware {
     hardware_interface::CallbackReturn OmniWheelHardware::on_configure(const rclcpp_lifecycle::State & /*previous_state*/){
 
         // show the magic numbers in other format so i can compare my recieved data with it
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "what i should be getting:");
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_POS:  0x%016lX", GET_POS);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "GET_VEL:  0x%016lX", GET_VEL);
 
         // convert to little endian
         uint8_t* pos_bytes = (uint8_t*)&GET_POS;
@@ -271,8 +270,9 @@ namespace otto_hardware {
                 vel_bytes[0], vel_bytes[1], vel_bytes[2], vel_bytes[3],
                 vel_bytes[4], vel_bytes[5], vel_bytes[6], vel_bytes[7]);
 
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
-        RCLCPP_DEBUG(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "position (le):  %s", pos_hex);
+        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "velocity (le):  %s", vel_hex);
+
 
         // reset parameters
         for (size_t i = 0; i < 4; ++i) {

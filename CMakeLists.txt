@@ -18,6 +18,14 @@ add_library(${PROJECT_NAME} SHARED
   src/seriallib.cpp
 )
 
+if(WIN32)
+  target_compile_definitions(otto_hardware PRIVATE 
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX
+    NOGDI
+  )
+endif()
+
 ament_target_dependencies(${PROJECT_NAME}
   hardware_interface
   pluginlib
