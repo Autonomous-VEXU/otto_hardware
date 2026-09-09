@@ -10,6 +10,7 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 include_directories(include)
 
