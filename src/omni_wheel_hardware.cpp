@@ -23,7 +23,7 @@ namespace otto_hardware {
 
     constexpr uint64_t SEND_CMD = 0xFEFAABCD1234BEEF;
     constexpr uint64_t GET_POS  = 0xF23BDEAD6789ACBD;
-    constexpr uint64_t GET_VEL  = 0xF81CB00B1350C0CA;
+    constexpr uint64_t GET_VEL  = 0xF81CB3924EA7C0CA;
 
     #pragma pack(push, 1)  // Force 1-byte alignment (removes all padding)
     struct MotorVelocities { 
@@ -158,70 +158,47 @@ namespace otto_hardware {
         if (rx_buf.size() >= packet_size) {
             // RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "processing buffer, size: %zu", rx_buf.size());
             
+            size_t idx = 0;
             // look through everyhting in buffer
-            for (size_t idx = 0; idx <= rx_buf.size() - sizeof(uint64_t); ++idx) {
+            // look at buffer so that the newest packet is what is read
+            while (rx_buf.size() - idx >= packet_size) {
                 uint64_t magic;
                 std::memcpy(&magic, rx_buf.data() + idx, sizeof(uint64_t));
                 
-                if (magic == GET_VEL || magic == GET_POS) {
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "found magic: 0x%016lX *", magic);
-                    
-                    // get more data for packet (36 bytes im pretty sure)
-                    if (idx + packet_size > rx_buf.size()) {
-                        RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "magic at idx %zu,  %zu more bytes for packet", 
-                            idx, (idx + packet_size) - rx_buf.size());
-                        break;
-                    }
-                    
-                    // complete packet?
-                    MotorVelocities mv;
-                    std::memcpy(&mv, rx_buf.data() + idx, packet_size);
-                    
-                    rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx + packet_size); // erase stuff
-                    RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "removed %zu bytes from buffer, remaining: %zu", idx + packet_size, rx_buf.size());
 
-                    if (mv.magic == GET_VEL){
-                        vel_[0] = mv.fl;
-                        vel_[1] = mv.fr;
-                        vel_[2] = mv.bl;
-                        vel_[3] = mv.br;
+                if (magic != GET_VEL && magic != GET_POS) { // move forward if not start of a packet
+                    ++idx;
+                    continue;
+                }
 
-                        intake_vel_[0] = mv.intake_1;
-                        intake_vel_[1] = mv.intake_2;
-                        intake_vel_[2] = mv.intake_3;
+                // complete packet
+                MotorVelocities mv;
+                std::memcpy(&mv, rx_buf.data() + idx, packet_size);
+                idx += packet_size;
 
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "vel: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", vel_[0], vel_[1], vel_[2], vel_[3]);
-                    } else if (mv.magic == GET_POS){
-                        pos_[0] = mv.fl;
-                        pos_[1] = mv.fr;
-                        pos_[2] = mv.bl;
-                        pos_[3] = mv.br;
-
-                        intake_pos_[0] = mv.intake_1;
-                        intake_pos_[1] = mv.intake_2;
-                        intake_pos_[2] = mv.intake_3;
-
-                        RCLCPP_INFO(rclcpp::get_logger("OmniWheelHardware"), "pos: fl=%.2f, fr=%.2f, bl=%.2f, br=%.2f", pos_[0], pos_[1], pos_[2], pos_[3]);
-                    }
-                    break; // should not return ok...
+                if (mv.magic == GET_VEL) {
+                    vel_[0] = mv.fl;
+                    vel_[1] = mv.fr;
+                    vel_[2] = mv.bl;
+                    vel_[3] = mv.br;
+                    intake_vel_[0] = mv.intake_1;
+                    intake_vel_[1] = mv.intake_2;
+                    intake_vel_[2] = mv.intake_3;
+                } else if (mv.magic == GET_POS) {
+                    pos_[0] = mv.fl;
+                    pos_[1] = mv.fr;
+                    pos_[2] = mv.bl;
+                    pos_[3] = mv.br;
+                    intake_pos_[0] = mv.intake_1;
+                    intake_pos_[1] = mv.intake_2;
+                    intake_pos_[2] = mv.intake_3;
+                } else {
+                    break; // should never run (ideally)
                 }
             }
-            
-            constexpr size_t MAX_BUFFER_SIZE = packet_size * 10;
-            if (rx_buf.size() > MAX_BUFFER_SIZE) {
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "overflow %zu, no valid packet found", rx_buf.size());
-                
-                // mor debugging prints
-                std::stringstream hex_stream;
-                hex_stream << "first 100 bytes from buffer: ";
-                for (size_t i = 0; i < std::min(rx_buf.size(), size_t(100)); ++i) {
-                    hex_stream << std::hex << std::setw(2) << std::setfill('0') << (int)rx_buf[i] << " ";
-                }
-                RCLCPP_WARN(rclcpp::get_logger("OmniWheelHardware"), "%s", hex_stream.str().c_str());
-                
-                rx_buf.clear();
-                //rx_buf.erase(rx_buf.begin(), rx_buf.end() - packet_size);
-            }
+
+            // clear used and skipped packets
+            rx_buf.erase(rx_buf.begin(), rx_buf.begin() + idx);
         }
         
         return hardware_interface::return_type::OK;
